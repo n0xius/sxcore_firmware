@@ -248,5 +248,6 @@ ModelManifest.xml
 *.bin
 *.elf
 
+.idea/
 resources/
 fw_flasher/
