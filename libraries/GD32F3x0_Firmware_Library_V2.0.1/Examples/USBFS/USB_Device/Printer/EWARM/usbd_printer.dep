@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>233821387</fileChecksum>
+  <configuration>
+    <name>USBFS</name>
+    <outputs>
+      <file>$PROJ_DIR$\..\src\main.c</file>
+      <file>$PROJ_DIR$\..\src\usb_delay.c</file>
+      <file>$PROJ_DIR$\..\src\gd32f3x0_it.c</file>
+      <file>$PROJ_DIR$\..\src\printer_core.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\system_gd32f3x0.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Utilities\gd32f3x0_eval.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_syscfg.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_exti.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_gpio.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_misc.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_pmu.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_rcu.c</file>
+      <file>$PROJ_DIR$\USBFS\Exe\USBD_printer.out</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Product.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_timer.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usb_core.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_usart.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\CMSIS\GD\GD32F3x0\Source\IAR\startup_gd32f3x0.s</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usbd_core.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usbd_int.c</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usbd_std.c</file>
+      <file>$PROJ_DIR$\USBFS\Obj\main.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\printer_core.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_core.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usb_core.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_usart.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_timer.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_syscfg.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_rcu.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_pmu.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_misc.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_gpio.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_exti.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_eval.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\system_gd32f3x0.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usb_delay.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\printer_core.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\main.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_it.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\startup_gd32f3x0.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_std.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_int.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_core.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usb_core.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_usart.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_timer.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_syscfg.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_rcu.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_pmu.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_misc.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_gpio.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_exti.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_eval.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\system_gd32f3x0.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usb_delay.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f3x0_it.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_std.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_int.pbi</file>
+      <file>$PROJ_DIR$\USBFS\Obj\usbd_printer.pbd</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Utilities\gd32f350r_eval.c</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f350r_eval.o</file>
+      <file>$PROJ_DIR$\USBFS\Obj\gd32f350r_eval.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\c\stdint.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\CMSIS\GD\GD32F3x0\Include\gd32f3x0.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_syscfg.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\cmsis_iar.h</file>
+      <file>$PROJ_DIR$\..\inc\usbd_conf.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_adc.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_usart.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usbd_core.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_dma.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_rcu.h</file>
+      <file>$PROJ_DIR$\..\inc\usb_delay.h</file>
+      <file>$TOOLKIT_DIR$\CMSIS\Include\core_cm4.h</file>
+      <file>$TOOLKIT_DIR$\CMSIS\Include\core_cmFunc.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Config_Normal.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_ctc.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_fmc.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_fwdgt.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_spi.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_misc.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_cmp.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ysizet.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usbd_int.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\CMSIS\GD\GD32F3x0\Include\system_gd32f3x0.h</file>
+      <file>$PROJ_DIR$\..\inc\gd32f3x0_libopt.h</file>
+      <file>$TOOLKIT_DIR$\CMSIS\Include\core_cmInstr.h</file>
+      <file>$TOOLKIT_DIR$\CMSIS\Include\core_cmSimd.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\yvals.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Defaults.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\xencoding_limits.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Threads.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_crc.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_dbg.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_exti.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_gpio.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_i2c.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_pmu.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_rtc.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_timer.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_wwdgt.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_tsi.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_cec.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Include\gd32f3x0_dac.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usbd_std.h</file>
+      <file>$PROJ_DIR$\..\inc\usb_conf.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usb_regs.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\wchar.h</file>
+      <file>$PROJ_DIR$\..\inc\gd32f3x0_it.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usb_core.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Utilities\gd32f350r_eval.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usb_defines.h</file>
+      <file>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Include\usb_std.h</file>
+      <file>$PROJ_DIR$\..\inc\printer_core.h</file>
+      <file>$TOOLKIT_DIR$\config\linker\GD\GD32F350xB.icf</file>
+      <file>$TOOLKIT_DIR$\CMSIS\Lib\IAR\iar_cortexM4l_math.a</file>
+      <file>$TOOLKIT_DIR$\lib\shb_l.a</file>
+      <file>$TOOLKIT_DIR$\lib\dl7M_tln.a</file>
+      <file>$TOOLKIT_DIR$\lib\rt7M_tl.a</file>
+      <file>$TOOLKIT_DIR$\lib\m7M_tl.a</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\..\src\main.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 37</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 21</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 97 87 89 63 105 111 101 107 90 95 99 103 67 113 85 86 88 91 92 93 94 96 98 100 102 104 83 115 108 112 74 62 75 64 76 13 66 68 77 71 78 65 79 72 80 69 81 82 114 106 73 70 109</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 73 111 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 108 113 115 106 114 70 67 109 83</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\src\usb_delay.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 35</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 54</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 107 62 79 77 81 111 64 76 66 78 80 82 63 113 112 74 75 13 68 71 65 72 69 108 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 73</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 73 111 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 108 113</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\src\gd32f3x0_it.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 38</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 55</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 13 63 62 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 110 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 84 70 67 107 112 111 108 113 106 114 109 83 73</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\src\printer_core.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 36</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 22</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 67 101 63 64 109 97 105 106 112 74 75 90 95 99 103 107 70 62 91 92 89 93 94 96 98 100 102 104 113 84 114 85 86 87 88 76 13 66 68 77 71 78 65 79 72 80 69 81 82 83 115 111 108</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 115 106 114 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 70 67 111 108 113 109 83 84</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\system_gd32f3x0.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 34</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 53</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 80 63 64 76 66 78 82 85 86 88 62 77 79 81 87 89 13 68 71 65 72 69 74 75 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Utilities\gd32f3x0_eval.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 33</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 52</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_syscfg.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 46</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 63 71 64 66 72 74 75 13 68 65 69 62 76 77 78 79 80 81 82 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 65 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 98 79 99 72 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_exti.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 32</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 51</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 63 77 81 62 79 64 76 66 78 80 82 74 75 13 68 71 65 72 69 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 96 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_gpio.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 31</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 50</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 63 77 81 85 86 88 62 79 64 76 66 78 80 82 87 89 13 68 71 65 72 69 74 75 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 97 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_misc.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 30</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 49</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 100 63 91 92 89 96 104 87 93 94 98 102 85 86 88 90 95 97 99 101 103 105 74 62 75 64 76 13 66 68 77 71 78 65 79 72 80 69 81 82</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 81 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_pmu.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 29</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 48</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 63 72 64 66 71 87 89 13 68 65 69 85 86 88 76 62 77 78 79 80 81 82 74 75 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 99 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 72 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_rcu.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 28</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 47</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 72 63 62 64 66 71 13 68 65 69 74 75 76 77 78 79 80 81 82 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 72 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 12</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\USBFS\Exe\USBD_printer.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 116 60 51 50 55 49 48 47 46 45 44 21 22 39 53 43 54 42 41 40 117 118 120 121 119</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_timer.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 26</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 45</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 66 82 63 76 78 64 80 85 86 88 62 77 79 81 87 89 13 68 71 65 72 69 74 75 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 101 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usb_core.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 24</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 43</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 94 102 85 86 88 93 98 63 91 92 89 96 100 104 108 87 90 95 97 99 101 103 105 107 113 112 74 62 75 64 76 13 66 68 77 71 78 65 79 72 80 69 81 82 111</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 111 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 108 113</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_standard_peripheral\Source\gd32f3x0_usart.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 25</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 44</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 63 72 64 66 71 87 89 13 68 65 69 85 86 88 76 62 77 78 79 80 81 82 74 75 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 69 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\CMSIS\GD\GD32F3x0\Source\IAR\startup_gd32f3x0.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 39</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usbd_core.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 23</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 42</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 66 64 107 71 63 106 87 89 13 72 83 67 85 86 88 76 68 65 69 70 111 112 74 62 75 90 91 92 93 77 78 79 80 81 82 108 109 94 95 96 97 98 99 100 101 102 103 104 105 113 114</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 70 67 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 111 108 113 106 114 109 83</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usbd_int.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 57</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 41</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 64 62 78 76 66 82 80 63 77 79 81 83 70 111 112 74 75 13 68 71 65 72 69 106 67 107 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 108 109 84 113 114</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 84 70 67 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 111 108 113 106 114 109 83</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Firmware\GD32F3x0_usbfs_driver\Source\usbd_std.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 56</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 40</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 67 106 63 62 64 95 107 90 103 99 83 114 112 74 75 97 101 105 111 70 109 85 86 87 88 89 91 92 93 94 96 98 100 102 104 113 76 13 66 68 77 71 78 65 79 72 80 69 81 82 108</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 106 114 107 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105 112 70 67 111 108 113 109 83</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\..\..\..\Utilities\gd32f350r_eval.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 61</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 60</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 63 93 74 75 98 94 102 91 92 89 96 100 104 62 64 90 95 97 99 101 103 105 85 86 87 88 76 13 66 68 77 71 78 65 79 72 80 69 81 82 112</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 112 63 74 62 64 89 90 76 13 91 92 87 66 93 75 88 85 86 68 94 77 95 71 96 78 97 65 98 79 99 72 100 80 101 69 102 81 103 104 82 105</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+</project>
+
+
