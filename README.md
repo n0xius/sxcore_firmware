@@ -3,6 +3,7 @@ DESCRIPTION:
 this is a wip reverse engineer'd implementation of the sx modchip firmware.
 you have to either extract the bct's and payloads from the sx firmware or provide your own ones.
 
+
 DISCLAIMER:
 
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
@@ -13,12 +14,14 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+
 REQUIREMENTS:
 
 - devkitPro with devkitARM: https://github.com/devkitPro/installer/releases
 - python to run gw_flash.py
 
-OPTIONAL STEPS (if you want to use the sx bct/payload):
+
+OPTIONAL STEPS (in case you want to use the sx bct/payload):
 
 - download the sx core/lite firmware v1.3
 - download gw_flash.py(https://gist.github.com/SciresM/cd40c3d1b5dfafbf1fe8f7e5cf13f91e)
@@ -30,7 +33,8 @@ OPTIONAL STEPS (if you want to use the sx bct/payload):
 - fill them into firmware\include\bct.h
 - the firmware part should now compile
 
-TODO
+
+TODO:
 
 - figure out correct names for spi data interaction functions
 - figure out correct name for error codes
