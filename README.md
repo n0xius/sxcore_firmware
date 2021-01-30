@@ -33,14 +33,16 @@ OPTIONAL STEPS (if you want to use the sx bct/payload):
 TODO
 
 - figure out correct names for spi data interaction functions
-- figure out correct name for error codes 0xBAD00004
-- figure out correct name for error codes 0xBAD0000E
-- figure out correct name for error codes 0xBAD00012
-- figure out correct name for usb command 0xFACE002A
-- figure out correct name for usb command 0xFACE002B
-- figure out correct name for usb command 0xFACE0036
-- figure out correct name for usb command 0xFACE003B
-- figure out correct name for usb command 0xFACE003C
-- figure out correct name for usb command 0xFACE003D
-- figure out correct name for usb command 0xFACE003F
-- figure out correct name for usb command 0xFACE0041
+- figure out correct name for error codes
+  - 0xBAD00004
+  - 0xBAD0000E
+  - 0xBAD00012
+- figure out correct name for usb command 
+  - 0xFACE002A
+  - 0xFACE002B
+  - 0xFACE0036
+  - 0xFACE003B
+  - 0xFACE003C
+  - 0xFACE003D
+  - 0xFACE003F
+  - 0xFACE0041
