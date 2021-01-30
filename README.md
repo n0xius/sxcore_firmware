@@ -29,3 +29,18 @@ OPTIONAL STEPS (if you want to use the sx bct/payload):
 - extract the stage 1 payload from the decrypted firmware at file offset 0x9220 with size 0x3880 (09 00 00 EA 00 00 03 40...)
 - fill them into firmware\include\bct.h
 - the firmware part should now compile
+
+TODO
+
+- figure out correct names for spi data interaction functions
+- figure out correct name for error codes 0xBAD00004
+- figure out correct name for error codes 0xBAD0000E
+- figure out correct name for error codes 0xBAD00012
+- figure out correct name for usb command 0xFACE002A
+- figure out correct name for usb command 0xFACE002B
+- figure out correct name for usb command 0xFACE0036
+- figure out correct name for usb command 0xFACE003B
+- figure out correct name for usb command 0xFACE003C
+- figure out correct name for usb command 0xFACE003D
+- figure out correct name for usb command 0xFACE003F
+- figure out correct name for usb command 0xFACE0041
