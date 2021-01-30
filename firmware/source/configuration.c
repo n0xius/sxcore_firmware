@@ -1,8 +1,11 @@
+#include "gd32f3x0_it.h"
+
 #include "gw_defines.h"
 #include "configuration.h"
 #include "flash.h"
 
-config_s g_saved_config;
+config_s* g_saved_config = (config_s*)((uint32_t)&__config);
+
 fpga_config_s g_fpga_config = {
         50, 800, 0
 };
@@ -46,7 +49,9 @@ uint32_t config_save_fpga_cfg(config_s *_config, fpga_config_s *_fpga_cfg)
 
 uint32_t config_load_from_flash(config_s *_config)
 {
-    memcpy(_config, &g_saved_config, sizeof(config_s));
+    // NOTE: linker cries about 4 byte alignment reading in a 4 aligned section
+    //       meanwhile the g_saved_config location is aligned by 1024 for fmc paging
+    memcpy(_config, g_saved_config, sizeof(config_s));
 
     if ( _config->magic != CONFIG_MAGIC )
     {
@@ -70,10 +75,10 @@ uint32_t config_write_to_flash(config_s *_config)
 {
     _config->magic = CONFIG_MAGIC;
 
-    if ( flash_erase((uint32_t)&g_saved_config) != GW_STATUS_FMC_SUCCESS )
+    if ( flash_erase((uint32_t)g_saved_config) != GW_STATUS_FMC_SUCCESS )
         return GW_STATUS_CONFIG_ERASE_ERROR; // 0xBAD00109
 
-    if ( flash_reprogram((uint8_t*)&g_saved_config, (uint8_t*)_config, sizeof(config_s)) != GW_STATUS_FMC_SUCCESS )
+    if ( flash_reprogram((uint8_t*)g_saved_config, (uint8_t*)_config, sizeof(config_s)) != GW_STATUS_FMC_SUCCESS )
         return GW_STATUS_CONFIG_WRITE_ERROR; // 0xBAD0010A
 
     return GW_STATUS_CONFIG_SUCCESS; // 0x900D0007

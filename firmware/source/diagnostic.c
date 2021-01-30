@@ -236,7 +236,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             diagnosis_printf("> r\n");
             diagnosis_printf("# Resetting to factory settings...\n");
 
-            uint32_t status = flash_erase((uint32_t)&g_saved_config);
+            uint32_t status = flash_erase((uint32_t)g_saved_config);
 
             diagnosis_printf("# Status: %08X\n", status);
             break;

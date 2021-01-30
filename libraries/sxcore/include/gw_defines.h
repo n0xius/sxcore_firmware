@@ -282,6 +282,13 @@ typedef struct _fpga_config_s
 	int32_t rng;
 } fpga_config_s;
 
+typedef struct _timeout_s
+{
+    uint32_t update_time;
+    uint32_t dword4;
+    uint64_t total_time_passed;
+} timeout_s;
+
 typedef struct _spi_parser_s
 {
   uint8_t* buffer;

@@ -112,7 +112,7 @@ typedef struct
 
 #pragma pack()
 
-extern uint8_t* const usbd_strings[USB_STRING_COUNT];
+extern uint8_t* usbd_strings[USB_STRING_COUNT];
 extern const usb_descriptor_device_struct device_descriptor;
 extern const usb_descriptor_configuration_set_struct configuration_descriptor;
 

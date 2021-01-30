@@ -14,24 +14,17 @@
 
 extern uint32_t usbfs_prescaler;
 
+uint8_t g_block_buffer[512];
+uint8_t spi_buffer[512];
+
+bootloader_usb_s* g_usb = 0;
+
 const uint8_t g_aes_keys[16] = {
     0x7B, 0xC7, 0x6D, 0x76,
     0xFF, 0x45, 0xEA, 0xFA,
     0x0C, 0x3B, 0x73, 0x0A,
     0xCC, 0x25, 0x93, 0x00
 };
-
-uint8_t g_block_buffer[512];
-uint8_t spi_buffer[512];
-
-bootloader_usb_s* g_usb = 0;
-
-typedef struct _timeout_s
-{
-    uint32_t update_time;
-    uint32_t dword4;
-    uint64_t total_time_passed;
-} timeout_s;
 
 void timeout_initialize(timeout_s* _timeout)
 {
@@ -52,7 +45,7 @@ int timeout_did_reach_timeout_ms(timeout_s* _timeout, uint32_t _ms)
     return _timeout->total_time_passed >= ((uint64_t)96000) * _ms;
 }
 
-void timer_initialize()
+void initialize_timers()
 {
     gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_8);
     gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_9);
@@ -126,7 +119,64 @@ void setup_chip_model_pins(void)
     gpio_mode_set(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_5);
 }
 
-void hardware_initialize()
+void initialize_usart(void)
+{
+    // doesn't work since on the GD32F350Cx, GPIO_AF_0 on pin 6 = I2C0_SCL and on pin 7 = I2C0_SDA
+
+    // USART0_TX
+    gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_6);
+    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_6);
+
+    // USART0_RX
+    gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_7);
+    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_7);
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7);
+
+    usart_deinit(USART0);
+    usart_baudrate_set(USART0, 115200);
+    usart_receive_config(USART0, USART_RECEIVE_ENABLE);
+    usart_transmit_config(USART0, USART_TRANSMIT_ENABLE);
+    usart_enable(USART0);
+}
+
+void initialize_ckout(void)
+{
+    rcu_ckout_config(RCU_CKOUTSRC_CKPLL_DIV2, RCU_CKOUT_DIV1);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_8);
+    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_8);
+}
+
+void initialize_spi_0(void)
+{
+    initialize_spi0(SPI_PSC_2);
+
+    gpio_bit_reset(GPIOB, GPIO_PIN_10);
+    gpio_bit_set(GPIOA, GPIO_PIN_4);
+    gpio_bit_set(GPIOA, GPIO_PIN_5);
+    gpio_bit_set(GPIOA, GPIO_PIN_7);
+    gpio_bit_set(GPIOA, GPIO_PIN_6);
+
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_10);
+
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_4);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_5);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_7);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
+
+    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_5);
+    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_6);
+    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_7);
+
+    gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_10);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_5);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_7);
+    gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO_PIN_1);
+    gpio_mode_set(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_PIN_4);
+}
+
+void hardware_initialize(void)
 {
     nvic_priority_group_set(NVIC_PRIGROUP_PRE2_SUB2);
 
@@ -171,64 +221,13 @@ void hardware_initialize()
     rcu_periph_reset_enable(RCU_TIMER15RST);
     rcu_periph_reset_enable(RCU_TIMER16RST);
 
-    // setup_usart0
-    {
-        // doesn't work since on the GD32F350Cx, GPIO_AF_0 on pin 6 = I2C0_SCL and on pin 7 = I2C0_SDA
+    initialize_usart();
 
-        // USART0_TX
-        gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_6);
-        gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);
-        gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_6);
+    initialize_timers();
 
-        // USART0_RX
-        gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_7);
-        gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_7);
-        gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7);
+    initialize_ckout();
 
-        usart_deinit(USART0);
-        usart_baudrate_set(USART0, 115200);
-        usart_receive_config(USART0, USART_RECEIVE_ENABLE);
-        usart_transmit_config(USART0, USART_TRANSMIT_ENABLE);
-        usart_enable(USART0);
-    }
-
-    timer_initialize();
-
-    // setup_ckout
-    {
-        rcu_ckout_config(RCU_CKOUTSRC_CKPLL_DIV2, RCU_CKOUT_DIV1);
-        gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_8);
-        gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_8);
-    }
-
-    // setup_spi0
-    {
-        initialize_spi0(0);                           // SPI_PSC_2
-
-        gpio_bit_reset(GPIOB, GPIO_PIN_10);
-        gpio_bit_set(GPIOA, GPIO_PIN_4);
-        gpio_bit_set(GPIOA, GPIO_PIN_5);
-        gpio_bit_set(GPIOA, GPIO_PIN_7);
-        gpio_bit_set(GPIOA, GPIO_PIN_6);
-
-        gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_10);
-
-        gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_4);
-        gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_5);
-        gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_7);
-        gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
-
-        gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_5);
-        gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_6);
-        gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_7);
-
-        gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_10);
-        gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_5);
-        gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);
-        gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_7);
-        gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO_PIN_1);
-        gpio_mode_set(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_PIN_4);
-    }
+    initialize_spi_0();
 
     setup_chip_model_pins();
 
@@ -254,11 +253,6 @@ void set_start_addr_to_firmware()
     nvic_vector_table_set(__firmware, 0);
     hardware_initialize();
 }
-
-extern uint32_t __data_start__;
-extern uint32_t __data_size__;
-extern uint32_t __bss_start__;
-extern uint32_t __bss_size__;
 
 void firmware_reset()
 {
@@ -876,8 +870,7 @@ uint8_t execute_spi_command(void)
 
         case 0x98: // erase config page
         {
-            // TODO: do page size alignment on g_saved_config inorder to just erase it.
-            uint32_t status = flash_erase((uint32_t)&g_saved_config);
+            uint32_t status = flash_erase((uint32_t)g_saved_config);
 
             *(uint32_t*)(spi_buffer) = status;
             should_send_response = 1;
@@ -921,6 +914,32 @@ void handle_firmware_spi_command(void)
     }
 }
 
+void listen_for_spi_commands()
+{
+    timeout_s timeout;
+
+    uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
+    spi0_send_05_send_BC(6, (uint8_t*)g_serial_number, 16);
+
+    spi0_send_07_via_24(1); // status set?
+    spi0_send_07_via_24(0); // status clear?
+
+    timeout_initialize(&timeout);
+
+    do
+    {
+        if ( (spi0_recv_0B_via_26() & 0x80) != 0 )
+        {
+            spi0_send_fpga_cmd(4);
+            spi0_send_fpga_cmd(1);
+            handle_firmware_spi_command();
+        }
+
+        timeout_update(&timeout);
+    }
+    while ( !timeout_did_reach_timeout_ms(&timeout, 5000) );
+}
+
 int main(void)
 {
     hardware_initialize();
@@ -928,6 +947,7 @@ int main(void)
     setup_adc_for_gpio_pin(GPIOA, GPIO_PIN_3, ADC_CHANNEL_3);
     uint32_t adc_value = adc_channel_read();
 
+    // NOTE: listen for usb vbus via PA09
     gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_9);
     gpio_input_bit_get(GPIOA, GPIO_PIN_9);
 
@@ -941,35 +961,11 @@ int main(void)
 
         if (adc_value < 1496)
         {
-            run_glitch(0, 0);
+            run_glitch(&g_no_diagnosis_print, 0);
             handle_firmware_spi_command();
         }
 
-        //
-        {
-            timeout_s timeout;
-
-            uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
-            spi0_send_05_send_BC(6, (uint8_t*)g_serial_number, 16);
-
-            spi0_send_07_via_24(1); // status set?
-            spi0_send_07_via_24(0); // status clear?
-
-            timeout_initialize(&timeout);
-
-            do
-            {
-                if ( (spi0_recv_0B_via_26() & 0x80) != 0 )
-                {
-                    spi0_send_fpga_cmd(4);
-                    spi0_send_fpga_cmd(1);
-                    handle_firmware_spi_command();
-                }
-
-                timeout_update(&timeout);
-            }
-            while ( !timeout_did_reach_timeout_ms(&timeout, 5000) );
-        }
+        listen_for_spi_commands();
     }
 
     shutdown();

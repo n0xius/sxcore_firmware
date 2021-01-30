@@ -16,7 +16,11 @@ void reset_handler(void)
 {
     SystemInit();
 
-    // TODO: copy flash variables into heap
+    // NOTE: copy data into ram
+    memcpy(&__bss_start__, &__data_start__, (uint32_t)&__data_size__);
+
+    // NOTE: clear stack
+    memset(&__bss_start__, 0, (uint32_t)&__bss_size__);
 
     main();
 }

@@ -17,7 +17,7 @@ uint32_t usbfs_prescaler = 0U;
 uint8_t usb_recv_buffer[CDC_ACM_DATA_PACKET_SIZE];
 uint8_t usb_send_buffer[CDC_ACM_DATA_PACKET_SIZE];
 
-static uint8_t is_authenticated = AUTH_NO_KEY;
+uint8_t is_authenticated = AUTH_NO_KEY;
 
 uint8_t* auth_master_key = GW_AUTH_MASTER_KEY;
 uint8_t* auth_program_key = GW_AUTH_PROGRAM_KEY;

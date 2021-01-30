@@ -14,3 +14,5 @@ uint32_t glitch_and_get_device_type(uint32_t *_device_type);
 uint32_t glitch_and_boot(void);
 
 uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_cfg);
+
+extern uint8_t execute_spi_command();

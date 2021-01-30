@@ -6,6 +6,7 @@ MEMORY
 {
 	FLASH_BOOTLOADER : ORIGIN = 0x8000000, LENGTH = 0x3000
 	FLASH_FIRMWARE : ORIGIN = 0x8003000, LENGTH = 0x1CC00
+	CONFIG : ORIGIN = 0x801FC00, LENGTH = 0x400
 	STACK : ORIGIN = 0x20000300, LENGTH = 0x1D00
 	SRAM : ORIGIN = 0x20002000, LENGTH = 0x2000
 }
@@ -18,6 +19,7 @@ SECTIONS
 
     PROVIDE(__bootloader = ORIGIN(FLASH_BOOTLOADER));
     PROVIDE(__firmware = ORIGIN(FLASH_FIRMWARE));
+    PROVIDE(__config = ORIGIN(CONFIG));
 
 	PROVIDE(__start__ = ORIGIN(FLASH_FIRMWARE));
     . = __start__;
@@ -29,10 +31,7 @@ SECTIONS
 		*(.text.start)
 		*(.text*)
 		*(.rodata*)
-		. = ALIGN(4);
 	} > FLASH_FIRMWARE
-
-	/* =========== DATA section =========== */
 
 	. = ALIGN(4);
 

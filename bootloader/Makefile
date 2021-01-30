@@ -34,12 +34,12 @@ INCLUDES	:=	include \
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-mcpu=cortex-m4 -mtune=cortex-m4 -march=armv7e-m -mthumb -mthumb-interwork
+ARCH	:=	-march=armv7e-m -mcpu=cortex-m4 -mtune=cortex-m4 -mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -Os \
-			-fomit-frame-pointer -ffunction-sections \
-			-fdata-sections -fshort-wchar -flto=auto \
-			$(ARCH) -fno-inline
+CFLAGS	:=	-g -Wall -Os -fomit-frame-pointer \
+			-ffunction-sections -fdata-sections \
+			-fshort-wchar -flto=auto -fno-inline \
+			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DGD32F350 -DUSE_STDPERIPH_DRIVER
 

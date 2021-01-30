@@ -61,4 +61,7 @@ SECTIONS
 
     __stack_top__    = 0x20002000;
     __stack_bottom__ = 0x20000300;
+
+    __bss_size__ = __bss_end__ - __bss_start__;
+    __data_size__ = __data_end__ - __data_start__;
 }

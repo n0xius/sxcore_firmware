@@ -21,3 +21,9 @@ extern int _vsnprintf(char* buffer, const uint32_t maxlen, const char* format, v
 // defined in linker.ld
 extern uint32_t __bootloader;
 extern uint32_t __firmware;
+extern uint32_t __config;
+
+extern uint32_t __data_start__;
+extern uint32_t __data_size__;
+extern uint32_t __bss_start__;
+extern uint32_t __bss_size__;

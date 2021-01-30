@@ -228,7 +228,7 @@ __ALIGN_BEGIN const usb_descriptor_language_id_struct usbd_language_id_desc __AL
                 .wLANGID = ENG_LANGID
         };
 
-__ALIGN_BEGIN uint8_t* const usbd_strings[] __ALIGN_END =
+__ALIGN_BEGIN uint8_t* usbd_strings[] __ALIGN_END =
 {
     [USBD_LANGID_STR_IDX] = (uint8_t *)&usbd_language_id_desc,
     [USBD_MFC_STR_IDX] = USBD_STRING_DESC("MCU"),

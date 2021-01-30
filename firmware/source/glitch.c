@@ -9,12 +9,6 @@
 #include "emmc.h"
 #include "spi.h"
 
-extern int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size );
-extern void* memcpy ( void* _Dst, const void* _Src, uint32_t _Size );
-extern void* memset ( void* _Dst, int _Val, uint32_t _Size );
-
-extern uint8_t execute_spi_command();
-
 const uint16_t erista_glitch_offsets[17] = {
     825, 830, 835, 840, 845, 850, 855, 860, 865, 870, 875, 880, 885, 890, 895, 900, 905u
 };
@@ -132,19 +126,14 @@ uint32_t setup_for_board_type(device_type _device_type, uint16_t _adc_data[2])
             status = 0;
             break;
         }
+
         case DEVICE_TYPE_MARIKO:
-        {
-            setup_adc_for_gpio_pin(GPIOB, GPIO_PIN_1, ADC_CHANNEL_9);
-
-            _adc_data[0] = 1024;
-            _adc_data[1] = 1296;
-
-            status = 0;
-            break;
-        }
         case DEVICE_TYPE_LITE:
         {
-            setup_adc_for_gpio_pin(GPIOA, GPIO_PIN_2, ADC_CHANNEL_2);
+            if (_device_type == DEVICE_TYPE_MARIKO)
+                setup_adc_for_gpio_pin(GPIOB, GPIO_PIN_1, ADC_CHANNEL_9);
+            else
+                setup_adc_for_gpio_pin(GPIOA, GPIO_PIN_2, ADC_CHANNEL_2);
 
             _adc_data[0] = 1024;
             _adc_data[1] = 1296;
@@ -152,6 +141,7 @@ uint32_t setup_for_board_type(device_type _device_type, uint16_t _adc_data[2])
             status = 0;
             break;
         }
+
         default:
             break;
     }
@@ -244,23 +234,21 @@ uint8_t did_toggle_chip()
     spi0_send_fpga_cmd(4);
     spi0_send_fpga_cmd(1);
 
-    uint32_t timeout = 0;
-    while ( (spi0_recv_0B_via_26() & 0x10) == 0 )
+    for ( uint32_t timeout = 0; timeout <= 7000; ++timeout )
     {
-    was_not_toggle_state:
-        ++timeout;
+        if ( (spi0_recv_0B_via_26() & 0x10) != 0 )
+        {
+            // NOTE: 0x43 = toggle chip state
+            if ( execute_spi_command() == 0x43 )
+                return 1;
+
+            timeout = 0;
+        }
+
         delay_us(50);
-        if ( timeout > 7000 )
-            return 0;
     }
 
-    if ( execute_spi_command() != 0x43 ) // toggle chip state
-    {
-        timeout = 0;
-        goto was_not_toggle_state;
-    }
-
-    return 1;
+    return 0;
 }
 
 void spi_parser_init(spi_parser_s *_spi_parser, uint8_t *_buffer, uint32_t _size)
@@ -279,7 +267,7 @@ uint32_t spi_parser_parse(spi_parser_s *_spi_parser)
     uint8_t* buffer = _spi_parser->buffer;
     uint8_t flags = buffer[0];
 
-    uint32_t v3 = __builtin_bswap32((uint32_t)(buffer + 1));
+    uint32_t args = __builtin_bswap32((uint32_t)(buffer + 1));
 
     if ( (flags & 0x40) == 0 )
     {
@@ -296,14 +284,14 @@ uint32_t spi_parser_parse(spi_parser_s *_spi_parser)
         {
             _spi_parser->datatype = 1;
             _spi_parser->cmd = flags & 0x3F;
-            _spi_parser->args = v3;
+            _spi_parser->args = args;
         }
     }
     else
     {
         _spi_parser->datatype = 0;
         _spi_parser->cmd = flags & 0x3F;
-        _spi_parser->args = v3;
+        _spi_parser->args = args;
     }
 
     if ( _spi_parser->datatype == 2 )
@@ -322,16 +310,16 @@ uint32_t spi_parser_parse(spi_parser_s *_spi_parser)
 
 uint32_t spi0_get_data_with_size(uint8_t *_buffer)
 {
-    uint32_t v2 = spi0_recv_0B_via_26() & 0x40;
+    uint32_t flags = spi0_recv_0B_via_26() & 0x40;
 
-    if ( v2 )
+    if ( flags )
     {
         spi0_send_05_recv_BA(0, _buffer, 512);
-        v2 = (uint32_t)_buffer[16];
+        flags = (uint32_t)_buffer[16];
         spi0_send_05_recv_BA(2, _buffer, 512);
     }
 
-    return v2;
+    return flags;
 }
 
 uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_cfg)
@@ -350,11 +338,11 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
     uint32_t device = get_device_type();
     uint32_t glitch_offsets_size = device == DEVICE_TYPE_ERISTA ? 17 : 13;
-    const uint16_t *glitch_offsets = device == DEVICE_TYPE_ERISTA ? erista_glitch_offsets : mariko_glitch_offsets;
+    uint16_t *glitch_offsets = (uint16_t*)(device == DEVICE_TYPE_ERISTA ? erista_glitch_offsets : mariko_glitch_offsets);
 
     uint16_t adc_threshold = 0;
-    uint16_t adc_thresholds[2] = { 0, 0 };
-    uint32_t status = setup_for_board_type(device, adc_thresholds);
+    uint16_t adc_threshold_ranges[2] = { 0, 0 };
+    uint32_t status = setup_for_board_type(device, adc_threshold_ranges);
 
     diagnosis_begin(_diag_print);
 
@@ -380,17 +368,17 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
         while ( 1 )
         {
             uint16_t adc_value = 0;
-            status = reset_fpga_and_read_adc_value(_diag_print, adc_thresholds[1], &adc_value);
+            status = reset_fpga_and_read_adc_value(_diag_print, adc_threshold_ranges[1], &adc_value);
 
-            if ( adc_thresholds[1] <= adc_value )
+            if ( adc_threshold_ranges[1] <= adc_value )
             {
-                adc_threshold = adc_thresholds[1];
+                adc_threshold = adc_threshold_ranges[1];
                 break;
             }
 
-            if ( adc_value >= adc_thresholds[0] )
+            if ( adc_value >= adc_threshold_ranges[0] )
             {
-                adc_threshold = adc_thresholds[0];
+                adc_threshold = adc_threshold_ranges[0];
                 break;
             }
 
@@ -493,8 +481,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
                 if ( rng1 < 0 )
                     rng1 = 0;
-
-                if ( rng1 > 255 )
+                else if ( rng1 > 255 )
                     rng1 = 255;
 
                 fpga_config.rng = rng1;
@@ -556,7 +543,12 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             uint8_t v43 = spi0_recv_data_26(0x0A, 1);
             uint32_t spi_data_len = spi0_get_data_with_size(spi_data);
 
-            int spi_data_type = spi_data_len >= 5 ? 1 : 3;
+            int spi_data_type;
+
+            if (spi_data_len >= 5)
+                spi_data_type = 1;
+            else
+                spi_data_type = 3;
 
             spi_parser_init(&spi_parser, spi_data, spi_data_len);
 

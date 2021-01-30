@@ -4,7 +4,7 @@
 #include "gw_defines.h"
 
 //extern diagnostic_print_s g_diagnosis_print;
-//extern diagnostic_print_s g_no_diagnosis_print;
+extern const diagnostic_print_s g_no_diagnosis_print;
 
 void handle_usb_diagnostic(bootloader_usb_s* _usb);
 
