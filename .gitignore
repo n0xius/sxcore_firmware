@@ -251,3 +251,4 @@ ModelManifest.xml
 .idea/
 resources/
 fw_flasher/
+firmware/include/bct.h
