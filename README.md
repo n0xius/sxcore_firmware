@@ -37,11 +37,11 @@ OPTIONAL STEPS (in case you want to use the sx bct/payload):
 TODO:
 
 - figure out correct names for spi data interaction functions
-- figure out correct name for error codes
+- figure out correct name for the following error codes
   - 0xBAD00004
   - 0xBAD0000E
   - 0xBAD00012
-- figure out correct name for usb command 
+- figure out correct name for the following usb commands
   - 0xFACE002A
   - 0xFACE002B
   - 0xFACE0036
