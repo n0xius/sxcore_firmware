@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 REQUIREMENTS:
 
-- devkitPro with devkitARM: https://github.com/devkitPro/installer/releases
+- devkitPro with devkitARM(https://devkitpro.org/wiki/Getting_Started)
 - python to run gw_flash.py
 
 
