@@ -62,7 +62,7 @@ void initialize_spi0(uint32_t _spi_prescale)
 
 void initialize_spi1()
 {
-    rcu_periph_reset_enable(RCU_SPI1RST);
+    rcu_periph_clock_enable(RCU_SPI1);
 
     gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_PIN_12);
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12);

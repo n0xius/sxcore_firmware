@@ -72,9 +72,9 @@ void initialize_usb()
 
         rcu_usbfs_clock_config(usbfs_prescaler);
 
-        rcu_periph_reset_enable(RCU_USBFSRST);
+        rcu_periph_clock_enable(RCU_USBFS);
 
-        rcu_periph_reset_enable(RCU_PMURST);
+        rcu_periph_clock_enable(RCU_PMU);
     }*/
 
     nvic_irq_enable(USBFS_IRQn, 2, 0);

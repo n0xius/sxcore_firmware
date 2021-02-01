@@ -100,21 +100,21 @@ void hardware_initialize()
 
         rcu_usbfs_clock_config(usbfs_prescaler);
 
-        rcu_periph_reset_enable(RCU_USBFSRST);
+        rcu_periph_clock_enable(RCU_USBFS);
 
-        rcu_periph_reset_enable(RCU_PMURST);
+        rcu_periph_clock_enable(RCU_PMU);
     }
 
-    rcu_periph_reset_enable(RCU_USART0RST);
+    rcu_periph_clock_enable(RCU_USART0);
 
-    rcu_periph_reset_enable(RCU_GPIOARST);
-    rcu_periph_reset_enable(RCU_GPIOBRST);
+    rcu_periph_clock_enable(RCU_GPIOA);
+    rcu_periph_clock_enable(RCU_GPIOB);
 
-    rcu_periph_reset_enable(RCU_TIMER0RST);
-    rcu_periph_reset_enable(RCU_TIMER13RST);
-    rcu_periph_reset_enable(RCU_TIMER14RST);
-    rcu_periph_reset_enable(RCU_TIMER15RST);
-    rcu_periph_reset_enable(RCU_TIMER16RST);
+    rcu_periph_clock_enable(RCU_TIMER0);
+    rcu_periph_clock_enable(RCU_TIMER13);
+    rcu_periph_clock_enable(RCU_TIMER14);
+    rcu_periph_clock_enable(RCU_TIMER15);
+    rcu_periph_clock_enable(RCU_TIMER16);
 
     timer_initialize();
 
@@ -223,7 +223,7 @@ void handle_spi_commands(void)
 
 int main(void)
 {
-    rcu_periph_reset_enable(RCU_GPIOARST);
+    rcu_periph_clock_enable(RCU_GPIOA);
 
     gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_9);
     FlagStatus usb_vbus = gpio_input_bit_get(GPIOA, GPIO_PIN_9);

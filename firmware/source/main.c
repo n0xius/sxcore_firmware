@@ -202,24 +202,24 @@ void hardware_initialize(void)
 
         rcu_usbfs_clock_config(usbfs_prescaler);
 
-        rcu_periph_reset_enable(RCU_USBFSRST);
+        rcu_periph_clock_enable(RCU_USBFS);
 
-        rcu_periph_reset_enable(RCU_PMURST);
+        rcu_periph_clock_enable(RCU_PMU);
     }
 
-    rcu_periph_reset_enable(RCU_USART0RST);
+    rcu_periph_clock_enable(RCU_USART0);
 
-    rcu_periph_reset_enable(RCU_GPIOARST);
-    rcu_periph_reset_enable(RCU_GPIOBRST);
-    rcu_periph_reset_enable(RCU_GPIOFRST);
+    rcu_periph_clock_enable(RCU_GPIOA);
+    rcu_periph_clock_enable(RCU_GPIOB);
+    rcu_periph_clock_enable(RCU_GPIOF);
 
-    rcu_periph_reset_enable(RCU_SPI0RST);
+    rcu_periph_clock_enable(RCU_SPI0);
 
-    rcu_periph_reset_enable(RCU_TIMER0RST);
-    rcu_periph_reset_enable(RCU_TIMER13RST);
-    rcu_periph_reset_enable(RCU_TIMER14RST);
-    rcu_periph_reset_enable(RCU_TIMER15RST);
-    rcu_periph_reset_enable(RCU_TIMER16RST);
+    rcu_periph_clock_enable(RCU_TIMER0);
+    rcu_periph_clock_enable(RCU_TIMER13);
+    rcu_periph_clock_enable(RCU_TIMER14);
+    rcu_periph_clock_enable(RCU_TIMER15);
+    rcu_periph_clock_enable(RCU_TIMER16);
 
     initialize_usart();
 

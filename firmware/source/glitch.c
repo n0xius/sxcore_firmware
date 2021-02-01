@@ -29,7 +29,7 @@ void setup_adc_for_gpio_pin(uint32_t _gpio, uint32_t _gpio_pin, uint8_t _adc_cha
 {
     adc_deinit();
     rcu_adc_clock_config(RCU_ADCCK_APB2_DIV6);
-    rcu_periph_reset_enable(RCU_ADC);
+    rcu_periph_clock_enable(RCU_ADC);
     gpio_mode_set(_gpio, GPIO_MODE_AF|GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, _gpio_pin);
     adc_channel_length_config(ADC_REGULAR_CHANNEL, 1);
     adc_regular_channel_config(0, _adc_channel, ADC_SAMPLETIME_1POINT5);
