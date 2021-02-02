@@ -88,8 +88,8 @@ void initialize_spi1()
 
     spi_init(SPI1, &spi_param);
     spi_ti_mode_disable(SPI1);
-    spi_i2s_interrupt_enable(SPI1, 0);
-    spi_i2s_interrupt_enable(SPI1, 1);
+    spi_i2s_interrupt_enable(SPI1, SPI_I2S_INT_TBE);
+    spi_i2s_interrupt_enable(SPI1, SPI_I2S_INT_RBNE);
     spi_enable(SPI1);
 
     gpiob_turn_on_pin12();

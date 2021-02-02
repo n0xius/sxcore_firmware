@@ -33,6 +33,7 @@ void timer_initialize()
     //timer_parameter.prescaler = 107; // kHz - 1 / 1000000 or MHz - 1?
     timer_parameter.prescaler = rcu_clock_freq_get(CK_SYS) / 1000000;
     timer_parameter.alignedmode = TIMER_COUNTER_EDGE;
+    timer_parameter.counterdirection = TIMER_COUNTER_UP;
     timer_parameter.clockdivision = TIMER_CKDIV_DIV1;
     timer_parameter.period = 255;
     timer_parameter.repetitioncounter = 0;
