@@ -144,7 +144,7 @@ void initialize_usart(void)
 
 void initialize_ckout(void)
 {
-    rcu_ckout_config(RCU_CKOUTSRC_CKPLL_DIV2, RCU_CKOUT_DIV1);
+    rcu_ckout_config(RCU_CKOUTSRC_CKPLL_DIV2, 1);
     gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_8);
     gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_8);
 }

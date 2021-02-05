@@ -47,7 +47,8 @@ void setup_adc_for_gpio_pin(uint32_t _gpio, uint32_t _gpio_pin, uint8_t _adc_cha
 
 uint32_t adc_channel_read(void)
 {
-    adc_special_function_config(ADC_CONTINUOUS_MODE, ENABLE);
+    //adc_special_function_config(ADC_CONTINUOUS_MODE, ENABLE);
+	adc_enable();
 
     while ( adc_flag_get(ADC_FLAG_EOC) == RESET );
 
@@ -375,6 +376,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             if ( adc_value >= adc_threshold_ranges[0] )
             {
                 adc_threshold = adc_threshold_ranges[0];
+                status = 0;
                 break;
             }
 
@@ -386,8 +388,6 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
                 did_reset_fpga = 1;
             }
         }
-
-        status = 0;
     }
 
     int32_t width = device == DEVICE_TYPE_ERISTA ? 35 : 53;
