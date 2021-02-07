@@ -3,9 +3,7 @@
 .thumb
 
 /* =========== EXTERNAL FUNCTIONS =========== */
-
 .global _start
-
 
 /* =========== VECTOR TABLE =========== */
 
@@ -75,24 +73,22 @@
 
 /* =========== STATIC VARIABLES =========== */
 
+.section	.vars.serial,"w",%progbits
+.type	    serial_number, %object
+.size	    serial_number, .-serial_number
+.global     serial_number
 
-.section	.vars.fw_funcs,"ax",%progbits
-.type	    firmware_function_table, %object
-.size	    firmware_function_table, .-firmware_function_table
-.global     firmware_function_table
-
-    firmware_function_table:
-        .word   initialize_firmware
-        .word   handle_firmware_usb_commands
+    serial_number:
+	    .byte	 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10
 
 
 .section	.vars.version,"w",%progbits
-.type	    firmware_version, %object
-.size	    firmware_version, .-firmware_version
-.global     firmware_version
+.type	    bootloader_version, %object
+.size	    bootloader_version, .-bootloader_version
+.global     bootloader_version
 
-    firmware_version:
-        .byte 0xFF, 0xFF, 0xFF, 0xFF
+    bootloader_version:
+	    .byte	 0xFF, 0xFF, 0xFF, 0xFF
 
 
 .section	.vars.spi_cmd,"w",%progbits
@@ -101,31 +97,15 @@
 .global     handle_spi_command
 
     handle_spi_command:
-        .word handle_firmware_spi_commands
-
-.section	.vars.pad,"w",%progbits
-.type	    alignment_pad, %object
-.size	    alignment_pad, .-alignment_pad
-
-    alignment_pad:
-        /* alignment padding of 144 bytes */
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
-        .long   0, 0, 0, 0
+        .word handle_bootloader_spi_commands
 
 
-.section	.vars.func_init,"w",%progbits
-.type	    did_initialize_functions, %object
-.size	    did_initialize_functions, .-did_initialize_functions
-.global     did_initialize_functions
+.section	.vars.version,"w",%progbits
+.type	    debug_mode, %object
+.size	    debug_mode, .-debug_mode
+.global     debug_mode
 
-    did_initialize_functions:
+    debug_mode:
         .byte 0xFF, 0xFF, 0xFF, 0xFF
 
 
@@ -137,15 +117,6 @@
 .thumb_func
 
     reset_handler:
-    /* load scb + vector table offset register (SCB_Type::VTOR) into r0 */
-        ldr     r0, = (0xE000E000 + 0xD08)
-
-    /* load firmware vector table into r1 */
-        ldr     r1, = vector_function_table
-
-    /* store firmware vector table in SCB_Type::VTOR to register the firmware as entry */
-        str     r1, [r0]
-
     /* Call the clock system intitialization function.*/
         ldr     r0, = SystemInit
         blx     r0
@@ -157,28 +128,6 @@
     /* Call the application's entry point.*/
         ldr     r0, = main
         bx      r0
-
-
-.section	.text.fw_init,"ax",%progbits
-.size	    initialize_firmware, .-initialize_firmware
-.global     initialize_firmware
-.thumb_func
-
-    initialize_firmware:
-    /* save return address */
-        push    { lr }
-
-    /* call the application's static data initialization function.*/
-        ldr     r0, = initialize_static_data
-        blx     r0
-
-    /* call set_start_addr_to_firmware in order to start the mcu entrypoint and initialize the peripherals .*/
-        ldr     r0, = set_start_addr_to_firmware
-        blx     r0
-
-    /* restore return address into pc register to return */
-        pop     { pc }
-
 
 .section	.text.data_init,"ax",%progbits
 .size	    initialize_static_data, .-initialize_static_data
@@ -214,26 +163,12 @@
 
         bx      lr
 
-
-.section	.text.retry,"ax",%progbits
-.size	    retry, .-retry
-.global retry
-
-    retry:
-
-        ldr     sp, = __stack_top__
-        eor     r0, r0
-        eor     r1, r1
-        bl      run_glitch
-        bl      handle_firmware_spi_commands
-
-
 .section	.text.default_handler,"ax",%progbits
 .size	    default_handler, .-default_handler
+.thumb_func
 
     default_handler:
         b       .
-
 
 /* =========== ARM CORTEX M4 IRQ's =========== */
 

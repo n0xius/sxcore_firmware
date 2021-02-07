@@ -230,12 +230,10 @@ uint32_t bootloader_handle_usb_command()
 
         case CMD_GET_SERIAL_NUMBER:                      // 0xFACE0010
         {
-            uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
-
             for(uint32_t i = 0; i < 16; ++i)
-                usb_send_buffer[i] = g_serial_number[i];
+                usb_send_buffer[i] = serial_number[i];
 
-            usb_send_func(sizeof(g_serial_number));
+            usb_send_func(16);
             break;
         }
 
@@ -247,26 +245,23 @@ uint32_t bootloader_handle_usb_command()
                 break;
             }
 
-            uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
-
             // NOTE: one time programming of the serial number
-            if ( *(uint32_t*)((uint8_t*)g_serial_number + 0) != 0xFFFFFFFF
-                 || *(uint32_t *)((uint8_t*)g_serial_number + 4) != 0xFFFFFFFF
-                 || *(uint32_t *)((uint8_t*)g_serial_number + 8) != 0xFFFFFFFF
-                 || *(uint32_t *)((uint8_t*)g_serial_number + 12) != 0xFFFFFFFF )
+            if ( *(uint32_t*)(serial_number + 0) != 0xFFFFFFFF
+                 || *(uint32_t *)(serial_number + 4) != 0xFFFFFFFF
+                 || *(uint32_t *)(serial_number + 8) != 0xFFFFFFFF
+                 || *(uint32_t *)(serial_number + 12) != 0xFFFFFFFF )
             {
                 status = GW_STATUS_FW_UPDATE_ERROR; // 0xBAD00009
                 break;
             }
 
-            status = flash_reprogram(g_serial_number, (uint8_t *)(usb_recv_buffer + 4), 16);
+            status = flash_reprogram((uint8_t *)serial_number, (uint8_t *)(usb_recv_buffer + 4), 16);
             break;
         }
 
         case CMD_GET_BOOTLDR_MODE:                  // 0xFACE0031
         {
-            uint32_t* g_debug_mode = (uint32_t*)((uint32_t)&__bootloader + 0x168);
-            usb_send_dword(*g_debug_mode);
+            usb_send_dword(*debug_mode);
             break;
         }
 
@@ -285,15 +280,13 @@ uint32_t bootloader_handle_usb_command()
                 break;
             }
 
-            uint32_t* g_bootloader_version = (uint32_t*)((uint32_t)&__bootloader + 0x160);
-            status = flash_reprogram((uint8_t *)g_bootloader_version, (uint8_t *)(usb_recv_buffer + 4), sizeof(uint32_t));
+            status = flash_reprogram((uint8_t *)bootloader_version, (uint8_t *)(usb_recv_buffer + 4), sizeof(uint32_t));
             break;
         }
 
         case CMD_GET_BLDR_VERSION:                   // 0xFACE0034
         {
-            uint32_t* g_bootloader_version = (uint32_t*)((uint32_t)&__bootloader + 0x160);
-            usb_send_dword(*g_bootloader_version);
+            usb_send_dword(*bootloader_version);
             break;
         }
 
@@ -332,10 +325,9 @@ uint32_t bootloader_handle_usb_command()
 
 int32_t initialize_ram_func_table_and_run_firmware_cmd(bootloader_usb_s *_bootloader_usb, uint32_t _usb_cmd_size, uint8_t _is_authenticated)
 {
-    uint32_t* g_debug_mode = (uint32_t*)((uint32_t)&__bootloader + 0x168);
     uint32_t* g_did_initialize_functions = (uint32_t*)((uint32_t)&__firmware + 0x1FC);
 
-    if( (*g_debug_mode != BOOTLOADER_DEBUG_MODE && *g_did_initialize_functions) )
+    if( (*debug_mode != BOOTLOADER_DEBUG_MODE && *g_did_initialize_functions) )
         return ((int32_t)-1);
 
     if (!g_ram_function_table)

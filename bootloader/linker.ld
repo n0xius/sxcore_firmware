@@ -1,67 +1,77 @@
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-ENTRY(_bldr_start)
+ENTRY(reset_handler)
 
 MEMORY
 {
-	FLASH_BOOTLOADER : ORIGIN = 0x8000000, LENGTH = 0x3000
-    FLASH_FIRMWARE : ORIGIN = 0x8003000, LENGTH = 0x1CC00
-    STACK : ORIGIN = 0x20000000, LENGTH = 0x300
-    SPI_BUFFER : ORIGIN = 0x20000800, LENGTH = 0x200
-    SRAM : ORIGIN = 0x20002000, LENGTH = 0x2000
+	FLASH_BOOTLOADER (rx) : ORIGIN = 0x8000000, LENGTH = 0x3000
+	FLASH_FIRMWARE (rx) :   ORIGIN = 0x8003000, LENGTH = 0x1CC00
+	CONFIG (rx) :           ORIGIN = 0x801FC00, LENGTH = 0x400
+	RAM (xrw) :           ORIGIN = 0x20000300, LENGTH = 0x1D00
 }
 
 SECTIONS
 {
-	/* =========== CODE section =========== */
-
     . = ALIGN(4);
 
-	PROVIDE(__bootloader = ORIGIN(FLASH_BOOTLOADER));
+    /* =========== EXPORTS =========== */
+
+    PROVIDE(__bootloader = ORIGIN(FLASH_BOOTLOADER));
     PROVIDE(__firmware = ORIGIN(FLASH_FIRMWARE));
+    PROVIDE(__config = ORIGIN(CONFIG));
 
-	PROVIDE(__start__ = ORIGIN(FLASH_BOOTLOADER));
-    . = __start__;
-	
+	PROVIDE(_start = ORIGIN(FLASH_BOOTLOADER));
+
+	/* =========== SECTIONS =========== */
+
+    . = _start;
+
+    .isr_vector :
+    {
+        KEEP(*(.isr_vector))
+    }> FLASH_BOOTLOADER
+
     . = ALIGN(4);
 
-	.text   : ALIGN(4)
+	.text :
 	{
-		*(.text.start)
+	    KEEP(*(.vars*));
+	    *(.vars*)
 		*(.text*)
-		*(.rodata*)
-		. = ALIGN(4);
 	} > FLASH_BOOTLOADER
-
-	/* =========== DATA section =========== */
 
 	. = ALIGN(4);
 
-	.data : ALIGN(4)
+	.rodata :
+    {
+        *(.rodata*)
+    }> FLASH_BOOTLOADER
+
+	. = ALIGN(4);
+
+	.data :
 	{
 		__data_start__ = .;
 		*(.data*)
 		__data_end__ = .;
-	} > STACK AT> FLASH_BOOTLOADER
-	
+	} > RAM AT> FLASH_BOOTLOADER
+
 	. = ALIGN(4);
-    
-	.bss : ALIGN(4)
+
+	.bss :
 	{
 		__bss_start__ = .;
-		*(.bss* COMMON)
+        *(.bss*)
+        *(COMMON)
 		__bss_end__ = .;
-	} > STACK
+	} > RAM
 
     . = ALIGN(4);
 
 	/* =========== MISC =========== */
 
-    __spi_buffer__ = ORIGIN(SPI_BUFFER);
+    __spi_buffer__ = ORIGIN(RAM) + 0x500;
 
-    __stack_top__    = 0x20002000;
     __stack_bottom__ = 0x20000300;
-
-    __bss_size__ = __bss_end__ - __bss_start__;
-    __data_size__ = __data_end__ - __data_start__;
+    __stack_top__    = 0x20002000;
 }

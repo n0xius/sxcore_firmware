@@ -13,6 +13,7 @@
 #include "configuration.h"
 
 extern uint32_t usbfs_prescaler;
+extern void retry();
 
 uint8_t g_block_buffer[512];
 uint8_t spi_buffer[512];
@@ -123,8 +124,6 @@ void setup_chip_model_pins(void)
 
 void initialize_usart(void)
 {
-    // doesn't work since on the GD32F350Cx, GPIO_AF_0 on pin 6 = I2C0_SCL and on pin 7 = I2C0_SDA
-
     // USART0_TX
     gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_6);
     gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);
@@ -145,6 +144,7 @@ void initialize_usart(void)
 void initialize_ckout(void)
 {
     rcu_ckout_config(RCU_CKOUTSRC_CKPLL_DIV2, 1);
+
     gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_8);
     gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_8);
 }
@@ -252,19 +252,8 @@ void shutdown()
 
 void set_start_addr_to_firmware()
 {
-    nvic_vector_table_set(__firmware, 0);
+    nvic_vector_table_set((uint32_t)__firmware, 0);
     hardware_initialize();
-}
-
-void firmware_reset()
-{
-    // NOTE: copy data into ram
-    memcpy(&__bss_start__, &__data_start__, (uint32_t)&__data_size__);
-
-    // NOTE: clear stack
-    memset(&__bss_start__, 0, (uint32_t)&__bss_size__);
-
-    set_start_addr_to_firmware();
 }
 
 void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t _is_authenticated)
@@ -764,7 +753,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
     }
 }
 
-void handle_firmware_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t _is_authenticated)
+void handle_firmware_usb_commands(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t _is_authenticated)
 {
     g_usb = _usb;
 
@@ -822,17 +811,15 @@ uint8_t execute_spi_command(void)
         {
             memset(spi_buffer, 0x11, sizeof(spi_buffer));
 
-            uint32_t* g_bootloader_version = (uint32_t*)((uint32_t)&__bootloader + 0x160);
+            uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
 
             spi_buffer[0] = (uint8_t)((*g_bootloader_version) & 0xFF);
             spi_buffer[1] = (uint8_t)((*g_bootloader_version >> 8) & 0xFF);
 
-            uint32_t* g_firmware_version = (uint32_t*)((uint32_t)&__firmware + 0x158);
+            spi_buffer[2] = (uint8_t)((*firmware_version) & 0xFF);
+            spi_buffer[3] = (uint8_t)((*firmware_version >> 8) & 0xFF);
 
-            spi_buffer[2] = (uint8_t)((*g_firmware_version) & 0xFF);
-            spi_buffer[3] = (uint8_t)((*g_firmware_version >> 8) & 0xFF);
-
-            uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
+            uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
 
             memcpy((uint8_t*)spi_buffer + 4, g_serial_number, 16);
 
@@ -850,14 +837,15 @@ uint8_t execute_spi_command(void)
 
         case 0x66: // switch into bootloader spi cmd handler
         {
-            ((reset_function_t)__bootloader + 0x164)();
+            // call handle_spi_cmds inside the bootloader
+            ((irq_handler_t)(__bootloader + 0x164))();
             break;
         }
 
         case 0x77:
         {
             // set sp to NVIC_NVIC_VECTTAB_RAM, call run_glitch, run handle_firmware_spi_command
-
+            retry();
             break;
         }
 
@@ -872,7 +860,7 @@ uint8_t execute_spi_command(void)
 
         case 0x98: // erase config page
         {
-            uint32_t status = flash_erase((uint32_t)g_saved_config);
+            uint32_t status = flash_erase((uint32_t)__config);
 
             *(uint32_t*)(spi_buffer) = status;
             should_send_response = 1;
@@ -906,7 +894,7 @@ uint8_t execute_spi_command(void)
     return spi_cmd;
 }
 
-void handle_firmware_spi_command(void)
+void handle_firmware_spi_commands(void)
 {
     while(1)
     {
@@ -920,7 +908,7 @@ void listen_for_spi_commands()
 {
     timeout_s timeout;
 
-    uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
+    uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
     spi0_send_05_send_BC(6, (uint8_t*)g_serial_number, 16);
 
     spi0_send_07_via_24(1); // status set?
@@ -934,7 +922,7 @@ void listen_for_spi_commands()
         {
             spi0_send_fpga_cmd(4);
             spi0_send_fpga_cmd(1);
-            handle_firmware_spi_command();
+            handle_firmware_spi_commands();
         }
 
         timeout_update(&timeout);
@@ -958,13 +946,13 @@ int main(void)
         if (spi0_init_with_psc_4() != GW_STATUS_SUCCESS)
         {
             set_led_color(LED_COLOR_RED);
-            handle_firmware_spi_command();
+            handle_firmware_spi_commands();
         }
 
         if (adc_value < 1496)
         {
             run_glitch(&g_no_diagnosis_print, 0);
-            handle_firmware_spi_command();
+            handle_firmware_spi_commands();
         }
 
         listen_for_spi_commands();

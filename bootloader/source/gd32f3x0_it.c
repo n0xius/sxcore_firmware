@@ -4,26 +4,6 @@
 #include <usbd_int.h>
 
 extern usb_core_handle_struct bootloader_usb_core;
-extern void main();
-
-/*!
-	\brief	  this function handles device resets
-	\param[in]  none
-	\param[out] none
-	\retval	 none
-*/
-void reset_handler(void)
-{
-    SystemInit();
-
-    // NOTE: copy data into ram
-    memcpy(&__bss_start__, &__data_start__, (uint32_t)&__data_size__);
-
-    // NOTE: clear stack
-    memset(&__bss_start__, 0, (uint32_t)&__bss_size__);
-
-    main();
-}
 
 /*!
 	\brief	  this function handles USBD interrupt

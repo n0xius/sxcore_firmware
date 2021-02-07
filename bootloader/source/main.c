@@ -124,10 +124,10 @@ void hardware_initialize()
 
 void initialize_vector_table()
 {
-    nvic_vector_table_set((uint32_t)&__firmware, 0);
+    nvic_vector_table_set((uint32_t)__firmware, 0);
 
     // call reset_handler inside firmware
-    ((reset_function_t)((uint32_t*)__firmware)[1])();
+    ((reset_function_t)__firmware[1])();
 }
 
 void shutdown()
@@ -139,9 +139,8 @@ void shutdown()
         pmu_to_standbymode(0);
 }
 
-void handle_spi_commands(void)
+void handle_bootloader_spi_commands(void)
 {
-
     spi0_send_fpga_cmd(1);
 
     while (1)
@@ -194,14 +193,13 @@ void handle_spi_commands(void)
 
                 case 0x26:
                 {
-                    uint32_t* g_debug_mode = (uint32_t*)((uint32_t)&__bootloader + 0x168);
-                    uint32_t* g_flash_function_table = (uint32_t*)((uint32_t)&__firmware + 0x150);
-                    uint32_t* g_did_initialize_functions = (uint32_t*)((uint32_t)&__firmware + 0x1FC);
+                    uint32_t* flash_function_table = (uint32_t*)((uint8_t*)__firmware + 0x150);
+                    uint32_t* did_initialize_functions = (uint32_t*)((uint8_t*)__firmware + 0x1FC);
 
-                    if (*g_debug_mode != BOOTLOADER_DEBUG_MODE && *g_did_initialize_functions)
+                    if (*debug_mode != BOOTLOADER_DEBUG_MODE && *did_initialize_functions)
                         break;
 
-                    g_ram_function_table = g_flash_function_table;
+                    g_ram_function_table = flash_function_table;
                     status_code = GW_STATUS_RESET;
                     break;
                 }
@@ -229,11 +227,10 @@ int main(void)
     gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_9);
     FlagStatus usb_vbus = gpio_input_bit_get(GPIOA, GPIO_PIN_9);
 
-    uint32_t* g_debug_mode = (uint32_t*)((uint32_t)&__bootloader + 0x168);
     uint32_t* g_did_initialize_functions = (uint32_t*)((uint32_t)&__firmware + 0x1FC);
 
     // check if usb vbus is present
-    if ((*g_debug_mode == BOOTLOADER_DEBUG_MODE || !*g_did_initialize_functions) && usb_vbus == RESET)
+    if ((*debug_mode == BOOTLOADER_DEBUG_MODE || !*g_did_initialize_functions) && usb_vbus == RESET)
         initialize_vector_table();
 
     hardware_initialize();

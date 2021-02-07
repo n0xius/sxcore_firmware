@@ -236,7 +236,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             diagnosis_printf("> r\n");
             diagnosis_printf("# Resetting to factory settings...\n");
 
-            uint32_t status = flash_erase((uint32_t)g_saved_config);
+            uint32_t status = flash_erase((uint32_t)__config);
 
             diagnosis_printf("# Status: %08X\n", status);
             break;
@@ -293,10 +293,8 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
 
         case DIAGNOSIS_GET_CHIP_INFO:
         {
-            uint32_t* g_firmware_version = (uint32_t*)((uint32_t)&__firmware + 0x158);
-
             diagnosis_printf("> v\n");
-            diagnosis_printf("# SX FW v%d.%d\n", (uint8_t)(*g_firmware_version >> 8), (uint8_t)(*g_firmware_version));
+            diagnosis_printf("# SX FW v%d.%d\n", (uint8_t)(*firmware_version >> 8), (uint8_t)(*firmware_version));
 
             uint32_t pin = get_pin_by_board_type();
 

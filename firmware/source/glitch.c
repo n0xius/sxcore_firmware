@@ -343,13 +343,12 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
     diagnosis_begin(_diag_print);
 
-    uint8_t* g_serial_number = (uint8_t*)((uint32_t)&__bootloader + 0x150);
-    uint32_t* g_bootloader_version = (uint32_t*)((uint32_t)&__bootloader + 0x160);
-    uint32_t* g_firmware_version = (uint32_t*)((uint32_t)&__firmware + 0x158);
+    uint8_t* g_serial_number = ((uint8_t*)__bootloader + 0x150);
+    uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
 
     diagnosis_hexdump_serial(_diag_print, g_serial_number);
     diagnosis_hexdump_device_type(_diag_print, device);
-    diagnosis_hexdump_fw_version(_diag_print, *g_firmware_version);
+    diagnosis_hexdump_fw_version(_diag_print, *firmware_version);
     diagnosis_hexdump_bldr_version(_diag_print, *g_bootloader_version);
 
     toggle_blue_led_glow(1);

@@ -116,26 +116,7 @@ typedef struct _aes128_ctx_s
 } aes128_ctx_s;
 
 /*!
-	\brief	  this function handles device resets
-	\param[in]  none
-	\param[out] none
-	\retval	 none
-*/
-void reset_handler(void)
-{
-    SystemInit();
-
-    // NOTE: copy data into ram
-    memcpy(&__bss_start__, &__data_start__, (uint32_t)&__data_size__);
-
-    // NOTE: clear stack
-    memset(&__bss_start__, 0, (uint32_t)&__bss_size__);
-
-    main();
-}
-
-/*!
-	\brief	  this function handles interrupts of timer13
+	\brief	  this function handles timer13 interrupts
 	\param[in]  none
 	\param[out] none
 	\retval	 none
@@ -143,6 +124,26 @@ void reset_handler(void)
 void timer13_irq_handler(void)
 {
     do_led_glow();
+}
+
+/*!
+	\brief	  this function handles timer13 interrupts
+	\param[in]  none
+	\param[out] none
+	\retval	 none
+*/
+void usbfs_irq_handler(void)
+{
+#ifndef USBFS_IRQ_INDEX
+#define USBFS_IRQ_INDEX 83
+#endif
+
+    // call usbfs irq of the bootloader
+    ((irq_handler_t)__bootloader[USBFS_IRQ_INDEX])();
+
+#ifdef USBFS_IRQ_INDEX
+#undef USBFS_IRQ_INDEX
+#endif
 }
 
 int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size )
@@ -306,7 +307,7 @@ static inline void _out_buffer(char character, void* buffer, uint32_t idx, uint3
 
 // internal secure strlen
 // \return The length of the string (excluding the terminating 0) limited by 'maxsize'
-static uint32_t _strnlen_s(const char* str, uint32_t maxsize)
+static inline uint32_t _strnlen_s(const char* str, uint32_t maxsize)
 {
     const char* s;
     for (s = str; *s && maxsize--; ++s);
@@ -315,13 +316,13 @@ static uint32_t _strnlen_s(const char* str, uint32_t maxsize)
 
 // internal test if char is a digit (0-9)
 // \return true if char is a digit
-static uint8_t _is_digit(char ch)
+static inline uint8_t _is_digit(char ch)
 {
     return (ch >= '0') && (ch <= '9');
 }
 
 // internal ASCII string to unsigned int conversion
-static uint32_t _atoi(const char** str)
+static inline uint32_t _atoi(const char** str)
 {
     uint32_t i = 0U;
     while (_is_digit(**str)) {

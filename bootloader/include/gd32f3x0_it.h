@@ -11,11 +11,13 @@ extern int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size );
 extern void* memcpy ( void* _Dst, const void* _Src, uint32_t _Size );
 extern void* memset ( void* _Dst, int _Val, uint32_t _Size );
 
-// defined in linker.ld
-extern uint32_t __bootloader;
-extern uint32_t __firmware;
+typedef void (*irq_handler_t) (void);
 
-extern uint32_t __data_start__;
-extern uint32_t __data_size__;
-extern uint32_t __bss_start__;
-extern uint32_t __bss_size__;
+extern const uint8_t* serial_number;
+extern const uint32_t* debug_mode;
+extern const uint32_t* bootloader_version;
+
+// defined in linker.ld
+extern const uint32_t* __bootloader;
+extern const uint32_t* __firmware;
+extern const uint32_t* __config;
