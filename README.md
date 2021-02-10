@@ -38,9 +38,13 @@ TODO:
 
 - figure out correct names for spi data interaction functions
 - figure out correct name for the following error codes
-  - 0xBAD00004
-  - 0xBAD0000E
-  - 0xBAD00012
+  - ~~0xBAD00004~~ 	(fpga startup sequence failed, returned by spi0_setup/sub_8005C0C)
+  - 0xBAD0000E		(fpga related, returned by spi0_setup/sub_8005C0C)
+  - 0xBAD0000F		(fpga related, returned by spi0_read_status/sub_8005A94)
+  - 0xBAD00010		(fpga related, returned by spi0_read_status/sub_8005A94)
+  - 0xBAD00011		(fpga related, returned by spi0_read_status/sub_8005A94)
+  - 0xBAD00012		(fpga related, returned by sub_8005F18)
+  - 0xBAD00013		(fpga related, returned by sub_8005EC8)
 - figure out correct name for the following usb commands
   - 0xFACE002A
   - 0xFACE002B
