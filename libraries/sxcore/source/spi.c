@@ -10,34 +10,43 @@ extern int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size );
 extern void* memcpy ( void* _Dst, const void* _Src, uint32_t _Size );
 extern void* memset ( void* _Dst, int _Val, uint32_t _Size );
 
-void gpioa_turn_off_pin4(void)
+uint8_t fpga_is_cdone_set(void)
+{
+    return gpio_input_bit_get(GPIOA, GPIO_PIN_1) != RESET;
+}
+
+// since this is configured as pull up, this will set the pin to high
+void fpga_spi0_reset_nss(void)
 {
     gpio_bit_reset(GPIOA, GPIO_PIN_4);
 }
 
-void gpiob_turn_off_pin10(void)
+// since this is configured as pull up, this will set the pin to high
+void fpga_spi0_reset_creset(void)
 {
     gpio_bit_reset(GPIOB, GPIO_PIN_10);
 }
 
-void gpiob_turn_off_pin12(void)
+void fpga_spi1_reset_creset(void)
 {
     gpio_bit_reset(GPIOB, GPIO_PIN_12);
 }
 
-void gpioa_spi0_wait_and_turn_on_pin4(void)
+void fpga_spi0_wait_and_set_nss(void)
 {
-    while (spi_i2s_flag_get(SPI0, SPI_STAT_TRANS) == SET);
+    while (spi_i2s_flag_get(SPI0, SPI_STAT_TRANS) != RESET);
 
     gpio_bit_set(GPIOA, GPIO_PIN_4);
 }
 
-void gpiob_turn_on_pin10(void)
+// since this is configured as pull up, this will set the pin to low
+void fpga_spi0_set_creset(void)
 {
     gpio_bit_set(GPIOB, GPIO_PIN_10);
 }
 
-void gpiob_turn_on_pin12(void)
+// since this is configured as pull up, this will set the pin to low
+void fpga_spi1_set_nss(void)
 {
     gpio_bit_set(GPIOB, GPIO_PIN_12);
 }
@@ -54,7 +63,7 @@ void initialize_spi0(uint32_t _spi_prescale)
     spi_parameter.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
     spi_parameter.prescale = _spi_prescale;
 
-    spi_disable(SPI0);
+    spi_i2s_deinit(SPI0);
     spi_init(SPI0, &spi_parameter);
     spi_ti_mode_disable(SPI0);
     spi_enable(SPI0);
@@ -92,7 +101,7 @@ void initialize_spi1()
     spi_i2s_interrupt_enable(SPI1, SPI_I2S_INT_RBNE);
     spi_enable(SPI1);
 
-    gpiob_turn_on_pin12();
+    fpga_spi1_set_nss();
 }
 
 void spi0_transmit_data(uint8_t *_data, uint32_t _data_len)
@@ -101,12 +110,14 @@ void spi0_transmit_data(uint8_t *_data, uint32_t _data_len)
     {
         spi_i2s_data_transmit(SPI0, (uint32_t)_data[i]);
 
-        while ( (SPI_STAT(SPI0) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != 3 );
+        // wait until TBE/RBNE is set
+        while ( (SPI_STAT(SPI0) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
         _data[i] = (uint8_t)(spi_i2s_data_receive(SPI0) & 0xFF);
     }
 
-    while ( ((SPI_STAT(SPI0) & 0xFF) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) != 2 );
+    // wait until spi transaction is done.
+    while ( ((SPI_STAT(SPI0) & 0xFF) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) != SPI_STAT_TBE );
 }
 
 void spi0_send_data(uint8_t *_data, uint32_t _data_len)
@@ -115,69 +126,69 @@ void spi0_send_data(uint8_t *_data, uint32_t _data_len)
     {
         spi_i2s_data_transmit(SPI0, (uint32_t)_data[i]);
 
-        // should be equal to (SPI_STAT(SPI0) & (SPI_STAT_TBE|SPI_STAT_RBNE)) == 0
-        while ( (SPI_STAT(SPI0) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != 3 );
+        // wait until TBE/RBNE is set
+        while ( (SPI_STAT(SPI0) & (SPI_STAT_TBE | SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
     }
 
-    // should be equal to (SPI_STAT(SPI0) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) == 0
-    while ( ((SPI_STAT(SPI0) & 0xFF) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) != 2 );
+    // wait until spi transaction is done.
+    while ( ((SPI_STAT(SPI0) & 0xFF) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) != SPI_STAT_TBE );
 }
 
 void spi1_recv_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 {
-    gpiob_turn_off_pin12();
+    fpga_spi1_reset_creset();
 
     spi_i2s_data_transmit(SPI1, (uint32_t)_cmd);
 
-    while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != 3 );
+    // wait until TBE/RBNE is set
+    while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE | SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
     for(uint32_t i = 0; i < _data_len; ++i)
     {
         spi_i2s_data_transmit(SPI1, (uint32_t)0xFF);
 
-        while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != 3 );
+        // wait until TBE/RBNE is set
+        while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE | SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
         _data[i] = (uint8_t)(spi_i2s_data_receive(SPI1) & 0xFF);
     }
 
-    while ( (SPI_STAT(SPI1) & 0x83) != 2 );
+    // wait until spi transaction is done.
+    while ( ((SPI_STAT(SPI1) & 0xFF) & (SPI_STAT_TRANS | SPI_STAT_TBE | SPI_STAT_RBNE)) != SPI_STAT_TBE );
 
-    gpiob_turn_on_pin12();
+    fpga_spi1_set_nss();
 }
 
 void spi1_send_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 {
-    gpiob_turn_off_pin12();
+    fpga_spi1_reset_creset();
 
     spi_i2s_data_transmit(SPI1, (uint32_t)_cmd);
 
-    while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != 3 );
+    // wait until TBE/RBNE is set
+    while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
     for(uint32_t i = 0; i < _data_len; ++i)
     {
         spi_i2s_data_transmit(SPI1, (uint32_t)_data[i]);
 
-        // should be equal to (SPI_STAT(SPI0) & (SPI_STAT_TBE|SPI_STAT_RBNE)) == 0
-        while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != 3 );
+        // wait until TBE/RBNE is set
+        while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
     }
 
-    // should be equal to (SPI_STAT(SPI0) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) == 0
-    while ( ((SPI_STAT(SPI1) & 0xFF) & (SPI_STAT_TRANS|SPI_STAT_TBE|SPI_STAT_RBNE)) != 2 );
+    // wait until spi transaction is done.
+    while ( ((SPI_STAT(SPI1) & 0xFF) & (SPI_STAT_TRANS | SPI_STAT_TBE | SPI_STAT_RBNE)) != SPI_STAT_TBE );
 
-    gpiob_turn_on_pin12();
+    fpga_spi1_set_nss();
 }
 
 uint8_t spi0_transfer_one_byte(uint8_t _data)
 {
-    spi_i2s_data_transmit(SPI0, (uint32_t)_data);
+    uint8_t buffer = _data;
 
-    while (spi_i2s_flag_get(SPI0, SPI_STAT_TBE) == SET);
+    spi0_transmit_data(&buffer, 1);
 
-    while (spi_i2s_flag_get(SPI0, SPI_STAT_RBNE) == SET);
-
-    while (spi_i2s_flag_get(SPI0, SPI_STAT_TRANS) == SET);
-
-    return (uint8_t)(spi_i2s_data_receive(SPI0) & 0xFF);
+    return (uint8_t)(buffer & 0xFF);
 }
 
 void spi0_send_clk(uint32_t _size)
@@ -185,7 +196,7 @@ void spi0_send_clk(uint32_t _size)
     uint8_t buffer = 0;
 
     for(uint32_t i = 0; i < _size; ++i)
-        spi0_send_data(&buffer, 1u);
+        spi0_send_data(&buffer, 1);
 }
 
 int spi0_read_status()
@@ -196,12 +207,13 @@ int spi0_read_status()
 
     uint32_t i = 9001;
 
-    do{
-        gpioa_turn_off_pin4();
+    do
+    {
+        fpga_spi0_reset_nss();
 
         spi0_transmit_data(v3, 2);
 
-        gpioa_spi0_wait_and_turn_on_pin4();
+        fpga_spi0_wait_and_set_nss();
 
         if ( !(v3[1] & 1) )
             break;
@@ -226,7 +238,7 @@ int spi0_read_status()
 
 void spi0_send_data_24(uint8_t _cmd, uint8_t _data_len, uint32_t _data)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     spi0_transfer_one_byte(0x24);
     spi0_transfer_one_byte(_cmd);
@@ -237,12 +249,12 @@ void spi0_send_data_24(uint8_t _cmd, uint8_t _data_len, uint32_t _data)
         _data >>= 8;
     }
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 }
 
 uint32_t spi0_recv_data_26(uint8_t _cmd, uint8_t _data_len)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     spi0_transfer_one_byte(0x26);
     spi0_transfer_one_byte(_cmd);
@@ -255,42 +267,42 @@ uint32_t spi0_recv_data_26(uint8_t _cmd, uint8_t _data_len)
         data |= spi0_transfer_one_byte(0);
     }
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
     return data;
 }
 
 void spi0_recv_data_BA(uint8_t* _data, uint32_t _data_len)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     spi0_transfer_one_byte(0xBA);
 
     for(int i = 0; i != _data_len; ++i)
         _data[i] = spi0_transfer_one_byte(0);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 }
 
 void spi0_send_data_BC(uint8_t* _data, uint32_t _data_len)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     spi0_transfer_one_byte(0xBC);
 
     for(int i = 0; i != _data_len; ++i)
         spi0_transfer_one_byte(_data[i]);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 }
 
 void spi0_send_4(void)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     uint8_t buffer = 4;
     spi0_send_data(&buffer, 1);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 
     spi0_send_clk(8u);
 }
@@ -302,12 +314,12 @@ void spi0_send_05_via_24(uint8_t _data)
 
 uint32_t spi0_get_fpga_cmd(void)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     uint8_t buffer = 6;
     spi0_send_data(&buffer, 1);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 
     spi0_send_clk(8);
 
@@ -343,7 +355,7 @@ void spi0_send_05_send_BC(uint8_t _cmd, uint8_t* _data, uint32_t _data_len)
 
 void spi0_send_03_read_8_bytes(uint32_t a1, uint8_t *a2)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     uint8_t v4[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -364,13 +376,13 @@ void spi0_send_03_read_8_bytes(uint32_t a1, uint8_t *a2)
     a2[7] = 0;
 
     spi0_transmit_data(a2, 8);
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
     spi0_send_clk(8);
 }
 
 uint32_t spi0_send_82_and_quad_word(uint8_t *a1)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     // NOTE: 0x20 = 8 bits x word size (2)
     uint8_t v3[4] = { 0x82, 0, 0, 0x20 };
@@ -378,19 +390,19 @@ uint32_t spi0_send_82_and_quad_word(uint8_t *a1)
 
     spi0_send_data(a1, 8);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 
     return spi0_read_status();
 }
 
 uint32_t spi0_transfer_83(uint8_t a1)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     uint8_t v3[5] = { 0x83, 0, 0, 0x25, a1 };
     spi0_transmit_data(v3, 5);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 
     return spi0_read_status();
 }
@@ -409,14 +421,14 @@ void spi0_send_0_C4_via_82()
 
 uint32_t spi0_write_11_bytes_via_02(uint8_t *_data)
 {
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
 
     uint8_t buffer = 2;
 
     spi0_send_data(&buffer, 1);
     spi0_send_data(_data, 11);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 
     spi0_send_clk(16u);
 
@@ -431,42 +443,41 @@ uint32_t spi0_send_11_bytes_0_15_f2_f1_c4(uint8_t _data)
 
 uint32_t spi0_send_11_bytes_30_0_0_1_0(uint8_t _data)
 {
-    uint8_t buffer[11] = { 0, 0, _data, 48, 0, 0, 1, 0, 0, 0, 0 };
+    uint8_t buffer[11] = { 0, 0, _data, 0x30, 0, 0, 1, 0, 0, 0, 0 };
     return spi0_write_11_bytes_via_02(buffer);
 }
 
 uint32_t spi0_send_8_bytes_via_82(void)
 {
-    uint8_t buffer[8];
-
-    *(uint32_t*)buffer = 0xF0F21500;
-    *(uint32_t*)(buffer + 4) = 0xC2;
+    uint8_t buffer[8] = { 0, 0x15, 0xF2, 0xF0, 0xC2, 0, 0, 0, };
     return spi0_send_82_and_quad_word(buffer);
 }
 
-uint32_t spi0_setup(uint32_t a1)
+uint32_t spi0_setup(uint32_t _prescale_select)
 {
-    initialize_spi0(a1 == 2 ? SPI_PSC_8 : SPI_PSC_4);
+    initialize_spi0(_prescale_select == 2 ? SPI_PSC_8 : SPI_PSC_4);
 
-    gpiob_turn_off_pin10();
+    fpga_spi0_reset_creset();
 
-    if ( (a1 & ~(2)) && a1 == 1)
-        gpioa_spi0_wait_and_turn_on_pin4();
-
-    if ( !(a1 & ~(2)) )
-        gpioa_turn_off_pin4();
+    if ( (_prescale_select & 0xFFFFFFFD) != 0)
+    {
+        if ( _prescale_select == 1 )
+            fpga_spi0_wait_and_set_nss();
+    }
+    else
+        fpga_spi0_reset_nss();
 
     delay_us(300);
 
-    gpiob_turn_on_pin10();
+    fpga_spi0_set_creset();
 
-    if ( (a1 & ~(2)) != 0 )
+    if ( (_prescale_select & 0xFFFFFFFD) != 0)
     {
-        if ( a1 == 1 )
+        if ( _prescale_select == 1 )
         {
             delay_ms(50);
 
-            if ( !gpio_input_bit_get(GPIOA, GPIO_PIN_1) )
+            if ( !fpga_is_cdone_set() )
                 return 0xBAD00004;
         }
 
@@ -475,12 +486,12 @@ uint32_t spi0_setup(uint32_t a1)
 
     delay_us(10);
 
-    if ( gpio_input_bit_get(GPIOA, GPIO_PIN_1) )
+    if ( fpga_is_cdone_set() )
         return 0xBAD00004;
 
     delay_ms(1);
 
-    if ( a1 != 2 )
+    if ( _prescale_select != 2 )
         return GW_STATUS_SUCCESS; // 0x900D0000
 
     initialize_spi0(SPI_PSC_8);
@@ -490,7 +501,7 @@ uint32_t spi0_setup(uint32_t a1)
 
     spi0_send_data(v5, 6);
 
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 
     spi0_send_clk(5000);
 

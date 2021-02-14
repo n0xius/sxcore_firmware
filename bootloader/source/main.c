@@ -127,13 +127,13 @@ void initialize_vector_table()
     nvic_vector_table_set((uint32_t)__firmware, 0);
 
     // call reset_handler inside firmware
-    ((reset_function_t)__firmware[1])();
+    ((void_function_t)__firmware[1])();
 }
 
 void shutdown()
 {
     set_led_color(LED_COLOR_OFF);
-    gpiob_turn_off_pin10();
+    fpga_spi0_set_creset();
 
     while ( 1 )
         pmu_to_standbymode(0);

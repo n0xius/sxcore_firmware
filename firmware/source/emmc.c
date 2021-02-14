@@ -47,9 +47,9 @@ void spi0_send_54()
 {
     uint8_t cmd = 0x54;
 
-    gpioa_turn_off_pin4();
+    fpga_spi0_reset_nss();
     spi0_send_data(&cmd, 1u);
-    gpioa_spi0_wait_and_turn_on_pin4();
+    fpga_spi0_wait_and_set_nss();
 }
 
 uint32_t mmc_send_command(uint8_t cmd, uint32_t argument, uint8_t *response, uint8_t *_data)

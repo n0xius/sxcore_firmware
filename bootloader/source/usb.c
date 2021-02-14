@@ -336,7 +336,7 @@ int32_t initialize_ram_func_table_and_run_firmware_cmd(bootloader_usb_s *_bootlo
         g_ram_function_table = g_flash_function_table;
 
         // call firmware_reset
-        ((reset_function_t)g_ram_function_table[0])();
+        ((void_function_t)g_ram_function_table[0])();
     }
 
     // call firmware_handle_usb_command

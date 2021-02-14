@@ -2,10 +2,10 @@
 
 #include <gd32f3x0.h>
 
-void gpioa_turn_off_pin4(void);
-void gpiob_turn_off_pin10(void);
-void gpioa_spi0_wait_and_turn_on_pin4(void);
-void gpiob_turn_on_pin10(void);
+void fpga_spi0_reset_nss(void);
+void fpga_spi0_reset_creset(void);
+void fpga_spi0_wait_and_set_nss(void);
+void fpga_spi0_set_creset(void);
 
 void initialize_spi0(uint32_t _spi_prescale);
 void initialize_spi1(void);

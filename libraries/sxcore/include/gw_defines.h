@@ -321,4 +321,5 @@ typedef struct _diagnostic_print_s
 	void (*end)();
 } diagnostic_print_s;
 
+typedef void(*void_function_t)(void);
 typedef uint32_t(*handle_usb_firmware_command_t)(bootloader_usb_s*, uint32_t, uint8_t);
