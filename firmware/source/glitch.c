@@ -538,12 +538,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             uint8_t v43 = spi0_recv_data_26(0x0A, 1);
             uint32_t spi_data_len = spi0_get_data_with_size(spi_data);
 
-            int spi_data_type;
-
-            if (spi_data_len >= 5)
-                spi_data_type = 1;
-            else
-                spi_data_type = 3;
+            int spi_data_type = spi_data_len < 5 ? 3 : 1;
 
             spi_parser_init(&spi_parser, spi_data, spi_data_len);
 
@@ -620,7 +615,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
             if ( total_type_3_spi_cmd == 8 )
             {
-                status = 0xBAD00108;
+                status = GW_STATUS_GLITCH_FAILED; // 0xBAD00108
                 break;
             }
 
@@ -659,7 +654,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             led_color = LED_COLOR_GREEN;
             break;
         case GW_STATUS_GLITCH_FAILED:               // 0xBAD00108
-            led_color = 0x00FFFFFF;
+            led_color = LED_COLOR_WHITE;
             break;
         case GW_STATUS_ADC_CHANNEL_READ_MISMATCH:   // 0xBAD00122
             led_color = LED_COLOR_PINK;

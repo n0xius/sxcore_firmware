@@ -12,7 +12,6 @@
 #include "diagnostic.h"
 #include "configuration.h"
 
-extern uint32_t usbfs_prescaler;
 extern void retry();
 
 uint8_t g_block_buffer[512];
@@ -66,8 +65,7 @@ void initialize_timers()
 
     timer_parameter_struct timer_parameter;
 
-    //timer_parameter.prescaler = 107; // kHz - 1 / 1000000 or MHz - 1?
-    timer_parameter.prescaler = rcu_clock_freq_get(CK_SYS) / 1000000;
+    timer_parameter.prescaler = 107; // kHz - 1 / 1000000 or MHz - 1?
     timer_parameter.alignedmode = TIMER_COUNTER_EDGE;
     timer_parameter.counterdirection = TIMER_COUNTER_UP;
     timer_parameter.clockdivision = TIMER_CKDIV_DIV1;
@@ -113,7 +111,7 @@ void initialize_timers()
     timer_enable(TIMER15);
 
     // setup_timer13_irq
-    nvic_irq_enable(TIMER13_IRQn, 1u, 1u);
+    nvic_irq_enable(TIMER13_IRQn, 1, 1);
 }
 
 void setup_chip_model_pins(void)
@@ -183,10 +181,10 @@ void hardware_initialize(void)
 
     // NOTE: the usb clock initialization is duplicated for whatever reason?!
     {
-        uint32_t usbfs_prescaler = 0;
+        uint32_t usbfs_prescaler = RCU_USBFS_CKPLL_DIV2;
 
         // NOTE: replaced "usbfs_prescaler = RCU_USBFS_CKPLL_DIV2" with proper code below for support of dynamic clocks
-        switch(rcu_clock_freq_get(CK_SYS))
+        /*switch(rcu_clock_freq_get(CK_SYS))
         {
             case 48000000U:
                 usbfs_prescaler = RCU_USBFS_CKPLL_DIV1;
@@ -199,7 +197,7 @@ void hardware_initialize(void)
                 break;
             default:
                 break;
-        }
+        }*/
 
         rcu_usbfs_clock_config(usbfs_prescaler);
 

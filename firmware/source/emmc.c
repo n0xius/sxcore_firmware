@@ -45,10 +45,11 @@ void mmc_spi_response_get(uint8_t *response)
 
 void spi0_send_54()
 {
-    uint8_t cmd = 0x54;
-
     fpga_spi0_reset_nss();
+
+    uint8_t cmd = 0x54;
     spi0_send_data(&cmd, 1u);
+
     fpga_spi0_wait_and_set_nss();
 }
 
@@ -125,7 +126,7 @@ uint32_t mmc_spi_check_response(uint8_t* _response, uint32_t _value)
 
 void fpga_reset_and_enable_mmc(uint8_t _enable_emmc)
 {
-    spi0_send_fpga_cmd(0x80u);
+    spi0_send_fpga_cmd(0x80);
     delay_ms(2);
     spi0_send_fpga_cmd(0);
 
@@ -133,7 +134,7 @@ void fpga_reset_and_enable_mmc(uint8_t _enable_emmc)
         return;
 
     delay_ms(15);
-    spi0_send_fpga_cmd(0x40u);
+    spi0_send_fpga_cmd(0x40);
     delay_ms(2000);
     spi0_send_fpga_cmd(0);
     delay_ms(1);
