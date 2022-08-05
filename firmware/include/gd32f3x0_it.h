@@ -1,8 +1,8 @@
 #pragma once
 
 #include <gd32f3x0.h>
-#include <stdarg.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 /* this function handles timer13 interrupts */
 void timer13_irq_handler(void);

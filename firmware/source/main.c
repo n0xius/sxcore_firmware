@@ -1,5 +1,5 @@
-#include "gd32f3x0_libopt.h"
 #include "gd32f3x0_it.h"
+#include "gd32f3x0_libopt.h"
 
 #include "gw_defines.h"
 #include "tea.h"
@@ -11,6 +11,7 @@
 #include "rgb_led.h"
 #include "diagnostic.h"
 #include "configuration.h"
+#include "initialization.h"
 
 extern void retry();
 
@@ -45,208 +46,6 @@ int timeout_did_reach_timeout_ms(timeout_s* _timeout, uint32_t _ms)
     return _timeout->total_time_passed >= ((uint64_t)96000) * _ms;
 }
 
-void initialize_timers()
-{
-    gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_8);
-    gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_9);
-    gpio_af_set(GPIOA, GPIO_AF_2, GPIO_PIN_10);
-
-    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_8);
-    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_9);
-    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_10);
-
-    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_8);
-    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_9);
-    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_10);
-
-    timer_deinit(TIMER0);
-    timer_deinit(TIMER15);
-    timer_deinit(TIMER16);
-
-    timer_parameter_struct timer_parameter;
-
-    timer_parameter.prescaler = 107; // kHz - 1 / 1000000 or MHz - 1?
-    timer_parameter.alignedmode = TIMER_COUNTER_EDGE;
-    timer_parameter.counterdirection = TIMER_COUNTER_UP;
-    timer_parameter.clockdivision = TIMER_CKDIV_DIV1;
-    timer_parameter.period = 255;
-    timer_parameter.repetitioncounter = 0;
-
-    timer_init(TIMER0, &timer_parameter);
-    timer_init(TIMER15, &timer_parameter);
-    timer_init(TIMER16, &timer_parameter);
-
-    timer_oc_parameter_struct timer_oc_param;
-
-    timer_oc_param.outputstate = TIMER_CCX_ENABLE;
-    timer_oc_param.outputnstate = TIMER_CCXN_ENABLE;
-    timer_oc_param.ocpolarity = TIMER_OCN_POLARITY_HIGH;
-    timer_oc_param.ocnpolarity = TIMER_OCN_POLARITY_LOW;
-    timer_oc_param.ocidlestate = TIMER_OCN_IDLE_STATE_LOW;
-    timer_oc_param.ocnidlestate = TIMER_OCN_IDLE_STATE_HIGH;
-
-    timer_channel_output_config(TIMER15, TIMER_CH_0, &timer_oc_param);
-    timer_channel_output_pulse_value_config(TIMER15, TIMER_CH_0, 256);
-    timer_channel_output_shadow_config(TIMER15, TIMER_CH_0, TIMER_OC_MODE_PWM0);
-    timer_channel_output_fast_config(TIMER15, TIMER_CH_0, TIMER_OC_FAST_DISABLE);
-    timer_automatic_output_enable(TIMER15);
-    timer_auto_reload_shadow_enable(TIMER15);
-
-    timer_channel_output_config(TIMER16, TIMER_CH_0, &timer_oc_param);
-    timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 256);
-    timer_channel_output_shadow_config(TIMER16, TIMER_CH_0, TIMER_OC_MODE_PWM0);
-    timer_channel_output_fast_config(TIMER16, TIMER_CH_0, TIMER_OC_FAST_DISABLE);
-    timer_automatic_output_enable(TIMER16);
-    timer_auto_reload_shadow_enable(TIMER16);
-
-    timer_channel_output_config(TIMER0, TIMER_CH_2, &timer_oc_param);
-    timer_channel_output_pulse_value_config(TIMER0, TIMER_CH_2, 256);
-    timer_channel_output_shadow_config(TIMER0, TIMER_CH_2, TIMER_OC_MODE_PWM0);
-    timer_channel_output_fast_config(TIMER0, TIMER_CH_2, TIMER_OC_FAST_DISABLE);
-    timer_automatic_output_enable(TIMER0);
-    timer_auto_reload_shadow_enable(TIMER0);
-
-    timer_enable(TIMER0);
-    timer_enable(TIMER16);
-    timer_enable(TIMER15);
-
-    // setup_timer13_irq
-    nvic_irq_enable(TIMER13_IRQn, 1, 1);
-}
-
-void setup_chip_model_pins(void)
-{
-    gpio_mode_set(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_3);
-    gpio_mode_set(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_5);
-}
-
-void initialize_usart(void)
-{
-    // USART0_TX
-    gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_6);
-    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);
-    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_6);
-
-    // USART0_RX
-    gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_7);
-    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_7);
-    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7);
-
-    usart_deinit(USART0);
-    usart_baudrate_set(USART0, 115200);
-    usart_receive_config(USART0, USART_RECEIVE_ENABLE);
-    usart_transmit_config(USART0, USART_TRANSMIT_ENABLE);
-    usart_enable(USART0);
-}
-
-void initialize_ckout(void)
-{
-    rcu_ckout_config(RCU_CKOUTSRC_CKPLL_DIV2, 1);
-
-    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_8);
-    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_8);
-}
-
-void initialize_spi_0(void)
-{
-    initialize_spi0(SPI_PSC_2);
-
-    gpio_bit_reset(GPIOB, GPIO_PIN_10);
-    gpio_bit_set(GPIOA, GPIO_PIN_4);
-    gpio_bit_set(GPIOA, GPIO_PIN_5);
-    gpio_bit_set(GPIOA, GPIO_PIN_7);
-    gpio_bit_set(GPIOA, GPIO_PIN_6);
-
-    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_10);
-    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_4);
-    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_5);
-    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_7);
-    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
-
-    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_5);
-    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_6);
-    gpio_af_set(GPIOA, GPIO_AF_0, GPIO_PIN_7);
-
-    gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_10);	// iCE40 CRESET
-    gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, GPIO_PIN_1); 	// iCE40 CDONE
-    gpio_mode_set(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_PIN_4);	// SPI0 NSS
-    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_5);		// SPI0 SCK
-    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_6);		// SPI0 MISO
-    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_7);		// SPI0 MOSI
-}
-
-void hardware_initialize(void)
-{
-    nvic_priority_group_set(NVIC_PRIGROUP_PRE2_SUB2);
-
-    // NOTE: the usb clock initialization is duplicated for whatever reason?!
-    {
-        uint32_t usbfs_prescaler = RCU_USBFS_CKPLL_DIV2;
-
-        // NOTE: replaced "usbfs_prescaler = RCU_USBFS_CKPLL_DIV2" with proper code below for support of dynamic clocks
-        /*switch(rcu_clock_freq_get(CK_SYS))
-        {
-            case 48000000U:
-                usbfs_prescaler = RCU_USBFS_CKPLL_DIV1;
-                break;
-            case 72000000U:
-                usbfs_prescaler = RCU_USBFS_CKPLL_DIV1_5;
-                break;
-            case 96000000U:
-                usbfs_prescaler = RCU_USBFS_CKPLL_DIV2;
-                break;
-            default:
-                break;
-        }*/
-
-        rcu_usbfs_clock_config(usbfs_prescaler);
-
-        rcu_periph_clock_enable(RCU_USBFS);
-
-        rcu_periph_clock_enable(RCU_PMU);
-    }
-
-    rcu_periph_clock_enable(RCU_USART0);
-
-    rcu_periph_clock_enable(RCU_GPIOA);
-    rcu_periph_clock_enable(RCU_GPIOB);
-    rcu_periph_clock_enable(RCU_GPIOF);
-
-    rcu_periph_clock_enable(RCU_SPI0);
-
-    rcu_periph_clock_enable(RCU_TIMER0);
-    rcu_periph_clock_enable(RCU_TIMER13);
-    rcu_periph_clock_enable(RCU_TIMER14);
-    rcu_periph_clock_enable(RCU_TIMER15);
-    rcu_periph_clock_enable(RCU_TIMER16);
-
-    initialize_usart();
-
-    initialize_timers();
-
-    initialize_ckout();
-
-    initialize_spi_0();
-
-    setup_chip_model_pins();
-
-    // setup_gpiof_pin6
-    {
-        gpio_mode_set(GPIOF, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_6);
-    }
-
-    delay_init();
-}
-
-void shutdown()
-{
-    set_led_color(LED_COLOR_OFF);
-    fpga_spi0_set_creset();
-
-    while ( 1 )
-        pmu_to_standbymode(0);
-}
-
 void set_start_addr_to_firmware()
 {
     nvic_vector_table_set((uint32_t)__firmware, 0);
@@ -263,14 +62,14 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
     switch(cmd)
     {
-        case CMD_PING:
+        case USB_CMD_PING:
         {
             status = GW_STATUS_SUCCESS;
             *(uint32_t*)(_usb->send_buffer) = status;
             break;
         }
 
-        case CMD_SPI0_INITALIZATION:
+        case USB_CMD_SPI0_INITALIZATION:
         {
             status = spi0_init_with_psc_4();
 
@@ -278,7 +77,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case CMD_RESET_FPGA:
+        case USB_CMD_RESET_FPGA:
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -303,8 +102,8 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case CMD_SEND_FPGA_CMD:
-        case CMD_SEND_FPGA_CMD_1:
+        case USB_CMD_SEND_FPGA_CMD:
+        case USB_CMD_SEND_FPGA_CMD_1:
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -320,7 +119,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case CMD_SEND_MMC_CMD:
+        case USB_CMD_MMC_SEND_CMD:
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -334,7 +133,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case CMD_WRITE_MMC_BLOCK:
+        case USB_CMD_MMC_WRITE_BLOCK:
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -347,16 +146,13 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             memcpy((uint8_t*)(g_block_buffer + block_index * 32), (uint8_t*)(_usb->recv_buffer + 8), 32);
 
             if ( block_index == 15 )
-            {
-                spi0_send_05_via_24(1);
-                spi0_send_data_BC(g_block_buffer, 512);
-            }
+                spi0_send_05_send_BC(1, g_block_buffer, 512);
 
             status = GW_STATUS_SUCCESS;
             break;
         }
 
-        case CMD_READ_MMC_BLOCK:
+        case USB_CMD_MMC_READ_BLOCK:
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -367,16 +163,13 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             uint32_t block_index = REG32((uint32_t)(_usb->recv_buffer + 4)) & 15;
 
             if ( block_index == 0 )
-            {
-                spi0_send_05_via_24(1);
-                spi0_recv_data_BA(g_block_buffer, 512);
-            }
+                spi0_send_05_send_BC(1, g_block_buffer, 512);
 
             memcpy((uint8_t*)(_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + block_index * 32), 32);
             break;
         }
 
-        case CMD_COPY_MMC_BLOCK:
+        case USB_CMD_MMC_COPY_BLOCK:
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -389,11 +182,11 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             if ( block_index == 0 )
                 spi0_recv_data_BA(g_block_buffer, 512);
 
-            memcpy((uint8_t*)(_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + block_index * 32), 32);
+            memcpy((uint8_t*)(_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + (block_index * 32)), 32);
             break;
         }
 
-        case CMD_SET_FPGA_DATA_TYPE:
+        case USB_CMD_FPGA_SET_CMD_BUFFER: // fpga set active data buffer
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -408,7 +201,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case CMD_GET_SPI0_STATUS:
+        case USB_CMD_FPGA_GET_STATUS_FLAGS: // fpga read mmc flags?
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -420,7 +213,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case 0xFACE002A:
+        case USB_CMD_FPGA_SET_GLITCH_PARAM: // fpga set glitch parameter?
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -431,13 +224,13 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             uint32_t cmd_and_size = REG32((uint32_t)(_usb->recv_buffer + 4));
             uint32_t data = REG32((uint32_t)(_usb->recv_buffer + 8));
 
-            spi0_send_data_24((uint8_t)cmd_and_size, (uint8_t)cmd_and_size >> 8, data);
+            spi0_send_data_24(cmd_and_size, data);
 
             status = GW_STATUS_SUCCESS;
             break;
         }
 
-        case 0xFACE002B:
+        case USB_CMD_FPGA_GET_GLITCH_PARAM: // fpga get glitch parameter?
         {
             if (_is_authenticated == AUTH_NO_KEY)
             {
@@ -446,8 +239,8 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             }
 
             uint32_t cmd_and_size = REG32((uint32_t)(_usb->recv_buffer + 4));
-
-            status = spi0_recv_data_26((uint8_t)cmd_and_size, (uint8_t)cmd_and_size >> 8);
+            
+            status = spi0_recv_data_26(cmd_and_size);
             break;
         }
 
@@ -579,9 +372,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
                 uint8_t data_from_03[8];
                 spi0_send_03_read_8_bytes(tea_key_1, data_from_03);
 
-                if ( !memcmp(data_from_03, deciphered_data + 3, 8) )
-                    status = 0x900D0000;
-                else
+                if ( memcmp(data_from_03, deciphered_data + 3, 8) != 0 )
                     status = 0xBAD00013;
             }
 
@@ -613,10 +404,10 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
                 spi0_get_fpga_cmd();
 
-                spi0_send_11_bytes_30_0_0_1_0(32);
-                spi0_send_11_bytes_30_0_0_1_0(96);
-                spi0_send_11_bytes_30_0_0_1_0(160);
-                spi0_send_11_bytes_30_0_0_1_0(224);
+                spi0_send_11_bytes_30_0_0_1_0(0x20);
+                spi0_send_11_bytes_30_0_0_1_0(0x60);
+                spi0_send_11_bytes_30_0_0_1_0(0xA0);
+                spi0_send_11_bytes_30_0_0_1_0(0xE0);
 
                 spi0_send_4();
 
@@ -651,11 +442,11 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
             uint32_t spi_psc = REG32((uint32_t)(_usb->recv_buffer + 4));
 
-            status = spi_psc ? spi0_setup(spi_psc) : 0xBAD00002;
+            status = spi_psc ? spi0_setup(spi_psc) : GW_STATUS_RESET;
             break;
         }
 
-        case 0xFACE003E:
+        case USB_CMD_GET_BOARD_ID: // get board type?
         {
             setup_chip_model_pins();
             status = get_pin_by_board_type();
@@ -701,25 +492,24 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
             break;
         }
 
-        case 0xFACE0040:
+        case USB_CMD_RESET_FPGA_GLITCH_CFG:
         {
-            uint32_t fpga_width = REG32((uint32_t)(_usb->recv_buffer + 4));  // reset fpga settings?
+            uint32_t fpga_width = REG32((uint32_t)(_usb->recv_buffer + 4));
 
-            // sub_8003F4C(fpga_width);
+            // fpga_reset_glitch_settings(fpga_width);
             {
-                spi0_send_data_24(0x03, 1, 120u);
-                spi0_send_data_24(0x01, 2, 1200u);
-                spi0_send_data_24(0x08, 1, 0);
-                spi0_send_data_24(0x02, 1, fpga_width);
-                spi0_send_data_24(0x09, 1, 0);
-                spi0_send_data_24(0x06, 1, 0);
-                spi0_send_data_24(0x06, 1, 16u);
-                spi0_send_data_24(0x09, 1, 1u);
+                spi0_send_data_24(0x103, 120);       // timeout?
+                spi0_send_data_24(0x201, 1200);      // offset?
+                spi0_send_data_24(0x108, 0);          // subcycle delay?
+                spi0_send_data_24(0x102, fpga_width); // pulse width
+                spi0_send_data_24(0x109, 0);
+                spi0_send_data_24(0x106, 0);
+                spi0_send_data_24(0x106, 16);
+                spi0_send_data_24(0x109, 1);
             }
 
             for ( int i = 0; i != 256; ++i )
             {
-                //if ( gpiof_get_pin6_status() != SET )
                 if (gpio_input_bit_get(GPIOF, GPIO_PIN_6) != SET)
                 {
                     status = i;
@@ -772,7 +562,87 @@ uint8_t execute_spi_command(void)
 
     switch(spi_cmd)
     {
-        case 0xA6: // something related to license?
+        case MC_REQUEST_SHUTDOWN:  // request shutdown
+        {
+            spi_buffer[0] = 0x99;
+            should_send_response = 1;
+            break;
+        }
+
+        case MC_GET_SERIAL_INFO:  // get bootloader & firmware version and serial
+        {
+            memset(spi_buffer, 0x11, sizeof(spi_buffer));
+
+            uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
+            uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
+
+            spi_buffer[0] = (uint8_t)((*g_bootloader_version) & 0xFF);
+            spi_buffer[1] = (uint8_t)((*g_bootloader_version >> 8) & 0xFF);
+
+            spi_buffer[2] = (uint8_t)((*firmware_version) & 0xFF);
+            spi_buffer[3] = (uint8_t)((*firmware_version >> 8) & 0xFF);
+
+            memcpy((uint8_t*)spi_buffer + 4, g_serial_number, 16);
+
+            spi_buffer[24] = spi0_recv_data_26(0x10C);
+
+            should_send_response = 1;
+            break;
+        }
+
+        case MC_ENTER_DEEPSLEEP_FW:  // shutdown
+        {
+            shutdown();
+            break;
+        }
+
+        case MC_SWITCH_TO_BLDR: // switch into bootloader spi cmd handler
+        {
+            // call handle_spi_cmds inside the bootloader
+            ((irq_handler_t)((uint8_t*)__bootloader + 0x164))();
+            break;
+        }
+
+        case MC_REBOOT_DEVICE:
+        {
+            // set sp to NVIC_NVIC_VECTTAB_RAM, call run_glitch, run handle_firmware_spi_command
+            retry();
+            break;
+        }
+
+        case MC_BOOT_OFW: // reset fpga & shutdown
+        {
+            spi0_send_fpga_cmd(0x80);
+            delay_ms(1);
+            spi0_send_fpga_cmd(0);
+            shutdown();
+            break;
+        }
+
+        case MC_ERASE_CFG: // erase config page
+        {
+            uint32_t status = flash_erase((uint32_t)__config);
+
+            *(uint32_t*)(spi_buffer) = status;
+            should_send_response = 1;
+            break;
+        }
+
+        case MC_TOGGLE_CHIP: // enable/disable modchip
+        {
+            uint32_t status = 0;
+            config_s config;
+
+            config_load_from_flash(&config);
+            config_set_chip_enabled(&config, spi_buffer[1]);
+            status = config_write_to_flash(&config);
+
+            *(uint32_t*)(spi_buffer) = status;
+            should_send_response = 1;
+            break;
+        }
+        
+        case MC_LICENSE_RNG: // something related to license?
         {
             uint8_t key_from_spi[16];
 
@@ -797,87 +667,6 @@ uint8_t execute_spi_command(void)
             break;
         }
 
-        case 0x43:  // request shutdown
-        {
-            spi_buffer[0] = 0x99;
-            should_send_response = 1;
-            break;
-        }
-
-        case 0x44:  // get bootloader & firmware version and serial
-        {
-            memset(spi_buffer, 0x11, sizeof(spi_buffer));
-
-            uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
-
-            spi_buffer[0] = (uint8_t)((*g_bootloader_version) & 0xFF);
-            spi_buffer[1] = (uint8_t)((*g_bootloader_version >> 8) & 0xFF);
-
-            spi_buffer[2] = (uint8_t)((*firmware_version) & 0xFF);
-            spi_buffer[3] = (uint8_t)((*firmware_version >> 8) & 0xFF);
-
-            uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
-
-            memcpy((uint8_t*)spi_buffer + 4, g_serial_number, 16);
-
-            spi_buffer[24] = spi0_recv_data_26(0x0C, 1);
-
-            should_send_response = 1;
-            break;
-        }
-
-        case 0x55:  // shutdown
-        {
-            shutdown();
-            break;
-        }
-
-        case 0x66: // switch into bootloader spi cmd handler
-        {
-            // call handle_spi_cmds inside the bootloader
-            ((irq_handler_t)(__bootloader + 0x164))();
-            break;
-        }
-
-        case 0x77:
-        {
-            // set sp to NVIC_NVIC_VECTTAB_RAM, call run_glitch, run handle_firmware_spi_command
-            retry();
-            break;
-        }
-
-        case 0x88: // reset fpga & shutdown
-        {
-            spi0_send_fpga_cmd(0x80);
-            delay_ms(1);
-            spi0_send_fpga_cmd(0);
-            shutdown();
-            break;
-        }
-
-        case 0x98: // erase config page
-        {
-            uint32_t status = flash_erase((uint32_t)__config);
-
-            *(uint32_t*)(spi_buffer) = status;
-            should_send_response = 1;
-            break;
-        }
-
-        case 0x99: // enable/disable modchip
-        {
-            uint32_t status = 0;
-            config_s config;
-
-            config_load_from_flash(&config);
-            config_set_chip_enabled(&config, spi_buffer[1]);
-            status = config_write_to_flash(&config);
-
-            *(uint32_t*)(spi_buffer) = status;
-            should_send_response = 1;
-            break;
-        }
-
         default:
             break;
     }
@@ -893,7 +682,7 @@ uint8_t execute_spi_command(void)
 
 void handle_firmware_spi_commands(void)
 {
-    while(1)
+    while ( TRUE )
     {
         while ( (spi0_recv_0B_via_26() & 0x10) == 0 );
 
@@ -903,22 +692,23 @@ void handle_firmware_spi_commands(void)
 
 void listen_for_spi_commands()
 {
-    timeout_s timeout;
-
     uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
     spi0_send_05_send_BC(6, (uint8_t*)g_serial_number, 16);
 
     spi0_send_07_via_24(1); // status set?
     spi0_send_07_via_24(0); // status clear?
 
+    timeout_s timeout;
     timeout_initialize(&timeout);
 
     do
     {
         if ( (spi0_recv_0B_via_26() & 0x80) != 0 )
         {
+            // fpga enter cmd mode
             spi0_send_fpga_cmd(4);
             spi0_send_fpga_cmd(1);
+
             handle_firmware_spi_commands();
         }
 

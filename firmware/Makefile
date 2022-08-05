@@ -40,7 +40,7 @@ CFLAGS	:=	-g -Wall -Os -fomit-frame-pointer \
 			-fshort-wchar -flto=auto -fno-inline \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DGD32F350 -DUSE_STDPERIPH_DRIVER
+CFLAGS	+=	$(INCLUDE) -DGD32F350 -DUSE_STDPERIPH_DRIVER -DFIRMWARE
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

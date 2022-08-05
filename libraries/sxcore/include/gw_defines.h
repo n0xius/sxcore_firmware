@@ -29,9 +29,9 @@
 #define GW_STATUS_FW_UPDATE_ERROR ((uint32_t)0xBAD00009)
 #define GW_STATUS_FW_UPDATE_MAC_MISMATCH ((uint32_t)0xBAD0000A)
 
-//#define GW_STATUS_ERROR_04 ((uint32_t)0xBAD0000E)
+//#define GW_STATUS_ERROR_0E ((uint32_t)0xBAD0000E)
 
-//#define GW_STATUS_ 0xBAD00012 // related to 0xFACE0041
+//#define GW_STATUS_ERROR_12 0xBAD00012 // related to 0xFACE0041
 
 #define GW_STATUS_NO_OR_UNKNOWN_DEVICE ((uint32_t)0xBAD00107) // no/unknown device (can happen if console is off) 
 #define GW_STATUS_GLITCH_FAILED ((uint32_t)0xBAD00108) // failed to glitch
@@ -84,59 +84,86 @@
 // USB Commands
 // ---------------------------------------------------------
 
-#define DIAGNOSIS_BOOT ((uint8_t)'b')
-#define DIAGNOSIS_RUN_DIAGNOSIS ((uint8_t)'d')
-#define DIAGNOSIS_ERASE_EMMC_PAYLOAD ((uint8_t)'e')
-#define DIAGNOSIS_PROGRAM_EMMC_PAYLOAD ((uint8_t)'p')
-#define DIAGNOSIS_FACTORY_RESET ((uint8_t)'r')
-#define DIAGNOSIS_TOGGLE_CHIP ((uint8_t)'s')
-#define DIAGNOSIS_RUN_TEST ((uint8_t)'t')
-#define DIAGNOSIS_GET_CHIP_INFO ((uint8_t)'v')
-#define DIAGNOSIS_FPGA_INCREASE_WIDTH ((uint8_t)'[')
-#define DIAGNOSIS_FPGA_DECREASE_WIDTH ((uint8_t)']')
-#define DIAGNOSIS_FPGA_INCREASE_RNG ((uint8_t)'<')
-#define DIAGNOSIS_FPGA_DECREASE_RNG ((uint8_t)'>')
-#define DIAGNOSIS_FPGA_INCREASE_OFFSET ((uint8_t)'+')
-#define DIAGNOSIS_FPGA_DECREASE_OFFSET ((uint8_t)'-')
+typedef enum USB_DIAG_CMD_e
+{
+	UDC_BOOT_OFW = 'b',
+	UDC_RUN_DIAGNOSIS = 'd',
+	UDC_EMMC_PAYLOAD_ERASE = 'e',
+	UDC_EMMC_PAYLOAD_PROGRAM = 'p',
+	UDC_FACTORY_RESET = 'r',
+	UDC_TOGGLE_CHIP = 's',
+	UDC_RUN_TEST = 't',
+	UDC_GET_CHIP_INFO = 'v',
+
+	UDC_FPGA_WIDTH_INCREASE = '[',
+	UDC_FPGA_WIDTH_DECREASE = ']',
+	UDC_FPGA_RNG_INCREASE = '<',
+	UDC_FPGA_RNG_DECREASE = '>',
+	UDC_FPGA_OFFSET_INCREASE = '+',
+	UDC_FPGA_OFFSET_DECREASE = '-'
+} USB_DIAG_CMD;
 
 // ---------------------------------------------------------
 
-#define CMD_GET_OB_PROTECTION ((uint32_t)0x0D15EA5E) // get ob protection data
-#define CMD_SET_OB_PROTECTION ((uint32_t)0x0DEFACED) // set ob protection data (authentication required)
+#define USB_CMD_GET_OB_PROTECTION ((uint32_t)0x0D15EA5E) // get ob protection data
+#define USB_CMD_SET_OB_PROTECTION ((uint32_t)0x0DEFACED) // set ob protection data (authentication required)
 
-#define CMD_PING ((uint32_t)0xFACE0000) // ping
-#define CMD_INIT_FW_UPDATE ((uint32_t)0xFACE0002) // fw update (authentication required)
-#define CMD_FW_UPDATE_BUFFER_POS ((uint32_t)0xFACE0004) // get current update buffer position
-#define CMD_FW_UPDATE_PACKET_CHECKSUM ((uint32_t)0xFACE0005) // get amount of update_packets recieved
-#define CMD_GET_UNIQUE_CHIP_ID ((uint32_t)0xFACE0006) // read the unique id from SYSCFG 1FFFF7AC
-#define CMD_SET_LED_COLOR ((uint32_t)0xFACE0008) // set led color
-#define CMD_SPI0_INITALIZATION ((uint32_t)0xFACE0009) // spi0 init with SPI_PSC_4
-#define CMD_AUTHENTICATE ((uint32_t)0xFACE000F) // authenticate (see AUTHENTICATION_KEY_1, AUTHENTICATION_KEY_2)
-#define CMD_GET_SERIAL_NUMBER ((uint32_t)0xFACE0010) // get sx core/lite serial number
-#define CMD_SET_SERIAL_NUMBER ((uint32_t)0xFACE0011) // set sx core/lite serial number (authentication required, only can be set if not set already)
-#define CMD_RESET_FPGA ((uint32_t)0xFACE0020) // reset fpga, initalize mmc (argument 1: 0xAABBCCDD) (authentication required)
-#define CMD_SEND_FPGA_CMD ((uint32_t)0xFACE0021) // send fpga command (authentication required)
-#define CMD_SEND_MMC_CMD ((uint32_t)0xFACE0022) // send mmc command (authentication required)
-#define CMD_WRITE_MMC_BLOCK ((uint32_t)0xFACE0023) // write mmc block (authentication required)
-#define CMD_READ_MMC_BLOCK ((uint32_t)0xFACE0024) // read mmc block (authentication required)
-#define CMD_COPY_MMC_BLOCK ((uint32_t)0xFACE0025) // copy mmc block (authentication required)
-#define CMD_SET_FPGA_DATA_TYPE ((uint32_t)0xFACE0026) // set spi0 data type (authentication required)
-#define CMD_SEND_FPGA_CMD_1 ((uint32_t)0xFACE0027) // send fpga command (authentication required)
-#define CMD_GET_SPI0_STATUS ((uint32_t)0xFACE0029) // get spi0 status (authentication required)
-//#define CMD_SEND_SPI0_DATA_24 ((uint32_t)0xFACE002A) // send data over spi0 via 0x24 (authentication required)
-//#define CMD_XFER_SPI0_DATA_26 ((uint32_t)0xFACE002B) // transfer data over spi0 via 0x26 (authentication required)
-#define CMD_GET_BOOTLDR_MODE ((uint32_t)0xFACE0031) // get bootloader debug mode value (see BOOTLOADER_DEBUG_MODE, BOOTLOADER_RETAIL_MODE)
-#define CMD_GET_FW_VERSION ((uint32_t)0xFACE0032) // get firmware version
-#define CMD_SET_BLDR_VERSION ((uint32_t)0xFACE0033) // set bootloader version (authentication required)
-#define CMD_GET_BLDR_VERSION ((uint32_t)0xFACE0034) // get bootloader version
-//#define CMD_ ((uint32_t)0xFACE0036) // TODO: figure out (authentication required)
-//#define CMD_ ((uint32_t)0xFACE003B) // TODO: figure out (authentication required)
-//#define CMD_ ((uint32_t)0xFACE003C) // TODO: figure out (authentication required)
-//#define CMD_ ((uint32_t)0xFACE003D) // TODO: figure out (authentication required)
-#define CMD_GET_BOARD_ID ((uint32_t)0xFACE003E) // get board type by pin (authentication required)
-#define CMD_ ((uint32_t)0xFACE003F) // spi1 setup, send 0x57, recv 0x8F, recv 0xE8 (authentication required)
-#define CMD_RESET_FPGA_SETTINGS ((uint32_t)0xFACE0040) // reset fpga settings? (authentication required)
-//#define CMD_ ((uint32_t)0xFACE0041) // TODO: figure out (authentication required)
+#define USB_CMD_PING ((uint32_t)0xFACE0000) // ping
+#define USB_CMD_FW_UPDATE_INIT ((uint32_t)0xFACE0002) // fw update (authentication required)
+#define USB_CMD_FW_UPDATE_BUFFER_POS ((uint32_t)0xFACE0004) // get current update buffer position
+#define USB_CMD_FW_UPDATE_PACKET_CHECKSUM ((uint32_t)0xFACE0005) // get amount of update_packets recieved
+#define USB_CMD_GET_UNIQUE_CHIP_ID ((uint32_t)0xFACE0006) // read the unique id from SYSCFG 1FFFF7AC
+#define USB_CMD_SET_LED_COLOR ((uint32_t)0xFACE0008) // set led color
+#define USB_CMD_SPI0_INITALIZATION ((uint32_t)0xFACE0009) // spi0 init with SPI_PSC_4
+#define USB_CMD_AUTHENTICATE ((uint32_t)0xFACE000F) // authenticate (see AUTHENTICATION_KEY_1, AUTHENTICATION_KEY_2)
+#define USB_CMD_GET_SERIAL_NUMBER ((uint32_t)0xFACE0010) // get sx core/lite serial number
+#define USB_CMD_SET_SERIAL_NUMBER ((uint32_t)0xFACE0011) // set sx core/lite serial number (authentication required, only can be set if not set already)
+#define USB_CMD_RESET_FPGA ((uint32_t)0xFACE0020) // reset fpga, initalize mmc (argument 1: 0xAABBCCDD) (authentication required)
+#define USB_CMD_SEND_FPGA_CMD ((uint32_t)0xFACE0021) // send fpga command (authentication required)
+#define USB_CMD_MMC_SEND_CMD ((uint32_t)0xFACE0022) // send mmc command (authentication required)
+#define USB_CMD_MMC_WRITE_BLOCK ((uint32_t)0xFACE0023) // write mmc block (authentication required)
+#define USB_CMD_MMC_READ_BLOCK ((uint32_t)0xFACE0024) // read mmc block (authentication required)
+#define USB_CMD_MMC_COPY_BLOCK ((uint32_t)0xFACE0025) // copy mmc block (authentication required)
+#define USB_CMD_FPGA_SET_CMD_BUFFER ((uint32_t)0xFACE0026) // set spi0 data type (authentication required)
+#define USB_CMD_SEND_FPGA_CMD_1 ((uint32_t)0xFACE0027) // send fpga command (authentication required)
+#define USB_CMD_FPGA_GET_STATUS_FLAGS ((uint32_t)0xFACE0029) // get fpga status flags (authentication required)
+#define USB_CMD_FPGA_SET_GLITCH_PARAM ((uint32_t)0xFACE002A) // send data over spi0 via 0x24 (authentication required)
+#define USB_CMD_FPGA_GET_GLITCH_PARAM ((uint32_t)0xFACE002B) // transfer data over spi0 via 0x26 (authentication required)
+#define USB_CMD_GET_BOOTLDR_MODE ((uint32_t)0xFACE0031) // get bootloader debug mode value (see BOOTLOADER_DEBUG_MODE, BOOTLOADER_RETAIL_MODE)
+#define USB_CMD_GET_FW_VERSION ((uint32_t)0xFACE0032) // get firmware version
+#define USB_CMD_SET_BLDR_VERSION ((uint32_t)0xFACE0033) // set bootloader version (authentication required)
+#define USB_CMD_GET_BLDR_VERSION ((uint32_t)0xFACE0034) // get bootloader version
+//#define USB_CMD_ ((uint32_t)0xFACE0036) // TODO: figure out (authentication required)
+//#define USB_CMD_ ((uint32_t)0xFACE003B) // TODO: figure out (authentication required)
+//#define USB_CMD_ ((uint32_t)0xFACE003C) // TODO: figure out (authentication required)
+//#define USB_CMD_ ((uint32_t)0xFACE003D) // TODO: figure out (authentication required)
+#define USB_CMD_GET_BOARD_ID ((uint32_t)0xFACE003E) // get board type by pin (authentication required)
+//#define USB_CMD_ ((uint32_t)0xFACE003F) // spi1 setup, send 0x57, recv 0x8F, recv 0xE8 (authentication required)
+#define USB_CMD_RESET_FPGA_GLITCH_CFG ((uint32_t)0xFACE0040) // reset fpga glitch config (authentication required)
+//#define USB_CMD_ ((uint32_t)0xFACE0041) // TODO: figure out (authentication required)
+
+// ---------------------------------------------------------
+// MMC Commands
+// ---------------------------------------------------------
+
+typedef enum MMC_CMD_e
+{
+	MC_FW_UPDATE_INIT = 0x22,
+	MC_FW_UPDATE_TRANSFER = 0x23,
+	MC_SET_LED_COLOR = 0x24,
+	MC_ENTER_DEEPSLEEP_BLDR = 0x25,
+	MC_SWITCH_TO_FW = 0x26,
+
+	//0x43,
+	MC_GET_SERIAL_INFO = 0x44,
+	MC_ENTER_DEEPSLEEP_FW = 0x55,
+	MC_SWITCH_TO_BLDR = 0x66,
+	MC_REBOOT_DEVICE = 0x77,
+	MC_BOOT_OFW = 0x88,
+	MC_ERASE_CFG = 0x98,
+	MC_TOGGLE_CHIP = 0x99,
+	MC_LICENSE_RNG = 0xA6
+} MMC_CMD;
 
 // ---------------------------------------------------------
 // Miscellaneous
@@ -291,12 +318,12 @@ typedef struct _timeout_s
 
 typedef struct _spi_parser_s
 {
-  uint8_t* buffer;
-  uint32_t buffer_length;
-  uint8_t *orig_buffer;
-  uint8_t datatype;
-  uint8_t cmd;
-  uint32_t args;
+	uint8_t* buffer;
+	uint32_t buffer_length;
+	uint8_t *orig_buffer;
+	uint8_t datatype;
+	uint8_t cmd;
+	uint32_t args;
 } spi_parser_s;
 
 typedef enum

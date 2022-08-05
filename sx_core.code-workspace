@@ -1,0 +1,44 @@
+{
+	"folders": [
+		{
+			"path": "bootloader"
+		},
+		{
+			"path": "firmware"
+		},
+		{
+			"path": "libraries"
+		},
+		{
+			"name": "sxcore_firmware",
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.default.cppStandard": "c++11",
+		"C_Cpp.default.cStandard": "c11",
+		"files.exclude": {
+			"libraries/GD32F3x0_Firmware_Library_V2.0.1/Examples/**": true,
+			"libraries/GD32F3x0_Firmware_Library_V2.0.1/Template/**": true
+		},
+		"makefile.extensionOutputFolder": "./.vscode",
+		"C_Cpp.default.systemIncludePath": [
+			"C:\\devkitPro\\devkitARM\\arm-none-eabi\\include",
+			"C:\\devkitPro\\devkitARM\\lib\\gcc\\arm-none-eabi\\12.1.0\\include",
+			"${workspaceFolder}\\..\\libraries\\GD32F3x0_Firmware_Library_V2.0.1\\Firmware\\CMSIS\\GD\\GD32F3x0\\Include",
+			"${workspaceFolder}\\..\\libraries\\GD32F3x0_Firmware_Library_V2.0.1\\Firmware\\CMSIS",
+			"${workspaceFolder}\\..\\libraries\\GD32F3x0_Firmware_Library_V2.0.1\\Firmware\\GD32F3x0_standard_peripheral\\Include",
+			"${workspaceFolder}\\..\\libraries\\GD32F3x0_Firmware_Library_V2.0.1\\Firmware\\GD32F3x0_usbfs_driver\\Include",
+			"${workspaceFolder}\\..\\libraries\\sxcore\\include\\**",
+		],
+		"C_Cpp.default.defines": [
+			"GD32F350",
+			"USE_STDPERIPH_DRIVER"
+		],
+		"C_Cpp.default.compilerPath": "C:\\devkitPro\\devkitARM\\bin\\arm-none-eabi-gcc",
+		"files.associations": {
+			"gd32f3x0_it.h": "c",
+			"mmc_defs.h": "c"
+		}
+	}
+}

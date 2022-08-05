@@ -23,21 +23,21 @@ uint8_t* auth_master_key = GW_AUTH_MASTER_KEY;
 uint8_t* auth_program_key = GW_AUTH_PROGRAM_KEY;
 
 usb_core_handle_struct bootloader_usb_core =
-        {
-                .dev =
-                        {
-                                .dev_desc = (uint8_t *)&device_descriptor,
-                                .config_desc = (uint8_t *)&configuration_descriptor,
-                                .strings = usbd_strings,
-                                .class_init = cdc_acm_init,
-                                .class_deinit = cdc_acm_deinit,
-                                .class_req_handler = cdc_acm_req_handler,
-                                .class_data_handler = cdc_acm_data_handler
-                        },
+{
+    .dev =
+    {
+        .dev_desc = (uint8_t *)&device_descriptor,
+        .config_desc = (uint8_t *)&configuration_descriptor,
+        .strings = usbd_strings,
+        .class_init = cdc_acm_init,
+        .class_deinit = cdc_acm_deinit,
+        .class_req_handler = cdc_acm_req_handler,
+        .class_data_handler = cdc_acm_data_handler
+    },
 
-                .udelay = delay_us,
-                .mdelay = delay_ms
-        };
+    .udelay = delay_us,
+    .mdelay = delay_ms
+};
 
 uint32_t ob_set_protection(uint16_t _spc)
 {
@@ -84,7 +84,7 @@ void initialize_usb()
 
 void wait_for_usb_configuration()
 {
-    while(bootloader_usb_core.dev.status != USB_STATUS_CONFIGURED);
+    while( bootloader_usb_core.dev.status != USB_STATUS_CONFIGURED );
 }
 
 uint32_t usb_recv_func(void)
@@ -92,7 +92,7 @@ uint32_t usb_recv_func(void)
     cdc_acm_data_receive(&bootloader_usb_core);
 
     // NOTE: wait until packet was fully received
-    while(packet_receive);
+    while( packet_receive );
 
     return receive_length;
 }
@@ -102,7 +102,7 @@ void usb_send_func(uint32_t _data_len)
     cdc_acm_data_send(&bootloader_usb_core, _data_len);
 
     // NOTE: wait until packet was fully sent
-    while(!packet_sent);
+    while( !packet_sent );
 }
 
 void usb_send_dword(uint32_t _data)
@@ -119,13 +119,13 @@ uint32_t bootloader_handle_usb_command()
 
     switch(cmd)
     {
-        case CMD_PING:                              // 0xFACE0000
+        case USB_CMD_PING:                              // 0xFACE0000
         {
             status = GW_STATUS_SUCCESS; // 0x900D0000
             break;
         }
 
-        case CMD_INIT_FW_UPDATE:                    // 0xFACE0002
+        case USB_CMD_FW_UPDATE_INIT:                    // 0xFACE0002
         {
             if (is_authenticated == AUTH_NO_KEY)
             {
@@ -137,14 +137,14 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_FW_UPDATE_BUFFER_POS:              // 0xFACE0004
+        case USB_CMD_FW_UPDATE_BUFFER_POS:              // 0xFACE0004
         {
             status = get_firmware_buffer_position();
             break;
         }
 
         // NOTE: used inside sxupdater_win32/sxflasher to verify if the block was read correctly
-        case CMD_FW_UPDATE_PACKET_CHECKSUM:         // 0xFACE0005
+        case USB_CMD_FW_UPDATE_PACKET_CHECKSUM:         // 0xFACE0005
         {
             // NOTE: calculated in handle_firmware_update
             status = get_firmware_block_checksum();
@@ -191,7 +191,7 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_SET_LED_COLOR:                     // 0xFACE0008
+        case USB_CMD_SET_LED_COLOR:                     // 0xFACE0008
         {
             uint32_t led_num = REG32(usb_recv_buffer[4]);
             uint32_t led_clr = REG32(usb_recv_buffer[8]);
@@ -215,7 +215,7 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_AUTHENTICATE:                      // 0xFACE000F
+        case USB_CMD_AUTHENTICATE:                      // 0xFACE000F
         {
             if (!memcmp((uint8_t *)(usb_recv_buffer + 4), auth_master_key, 12))
                 is_authenticated = AUTH_MASTER_KEY;
@@ -228,7 +228,7 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_GET_SERIAL_NUMBER:                      // 0xFACE0010
+        case USB_CMD_GET_SERIAL_NUMBER:                      // 0xFACE0010
         {
             for(uint32_t i = 0; i < 16; ++i)
                 usb_send_buffer[i] = serial_number[i];
@@ -237,7 +237,7 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_SET_SERIAL_NUMBER:                     // 0xFACE0011
+        case USB_CMD_SET_SERIAL_NUMBER:                     // 0xFACE0011
         {
             if (is_authenticated != AUTH_MASTER_KEY)
             {
@@ -259,20 +259,20 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_GET_BOOTLDR_MODE:                  // 0xFACE0031
+        case USB_CMD_GET_BOOTLDR_MODE:                  // 0xFACE0031
         {
             usb_send_dword(*debug_mode);
             break;
         }
 
-        case CMD_GET_FW_VERSION:                    // 0xFACE0032
+        case USB_CMD_GET_FW_VERSION:                    // 0xFACE0032
         {
             uint32_t* g_firmware_version = (uint32_t*)((uint32_t)&__firmware + 0x158);
             usb_send_dword(*g_firmware_version);
             break;
         }
 
-        case CMD_SET_BLDR_VERSION:                   // 0xFACE0033
+        case USB_CMD_SET_BLDR_VERSION:                   // 0xFACE0033
         {
             if (is_authenticated != AUTH_MASTER_KEY)
             {
@@ -284,13 +284,13 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_GET_BLDR_VERSION:                   // 0xFACE0034
+        case USB_CMD_GET_BLDR_VERSION:                   // 0xFACE0034
         {
             usb_send_dword(*bootloader_version);
             break;
         }
 
-        case CMD_GET_OB_PROTECTION:                 // 0x0D15EA5E
+        case USB_CMD_GET_OB_PROTECTION:                 // 0x0D15EA5E
         {
             usb_send_dword(GW_STATUS_SEND_OB_DATA); // 0x900D0004
             usb_send_dword(*(uint32_t*)(OB + 0));   // OB_SPC & OB_USER
@@ -299,7 +299,7 @@ uint32_t bootloader_handle_usb_command()
             break;
         }
 
-        case CMD_SET_OB_PROTECTION:                 // 0x0DEFACED
+        case USB_CMD_SET_OB_PROTECTION:                 // 0x0DEFACED
         {
             if (is_authenticated != AUTH_MASTER_KEY)
             {
@@ -354,15 +354,15 @@ void handle_usb_transfers()
 
     initialize_usb();
 
-    while (1)
+    while ( TRUE )
     {
         uint32_t status_code = 0;
         uint32_t recv_data_size = 0;
 
-        do{
+        do {
             wait_for_usb_configuration();
             recv_data_size = usb_recv_func();
-        } while(!recv_data_size);
+        } while ( !recv_data_size );
 
         if (recv_data_size == sizeof(firmware_update_block_s))
         {

@@ -93,7 +93,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
 {
     switch(_usb->recv_buffer[0])
     {
-        case DIAGNOSIS_BOOT:
+        case UDC_BOOT_OFW:
         {
             diagnosis_printf("> b\n");
             diagnosis_printf("# Boot\n");
@@ -111,7 +111,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_RUN_DIAGNOSIS:
+        case UDC_RUN_DIAGNOSIS:
         {
             diagnosis_printf("> d\n");
             diagnosis_printf("# Diagnosing...\n");
@@ -135,7 +135,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_ERASE_EMMC_PAYLOAD:
+        case UDC_EMMC_PAYLOAD_ERASE:
         {
             diagnosis_printf("> e\n");
             diagnosis_printf("# Erasing eMMC payload...\n");
@@ -159,7 +159,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_PROGRAM_EMMC_PAYLOAD:
+        case UDC_EMMC_PAYLOAD_PROGRAM:
         {
             diagnosis_printf("> p\n");
             diagnosis_printf("# Programming eMMC payload...\n");
@@ -179,14 +179,14 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             {
                 diagnosis_printf("# CID: ");
 
-                for ( uint32_t i = 0; i != 16; ++i )
+                for ( uint32_t i = 0; i < 16; ++i )
                     diagnosis_printf("%02X", cid_data[i]);
 
                 diagnosis_printf(" ");
 
                 switch ( cid_data[0] )
                 {
-                    case 0x15u:
+                    case 0x15:
                     {
                         diagnosis_printf("Samsung");
 
@@ -199,7 +199,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
                         break;
                     }
 
-                    case 0x11u:
+                    case 0x11:
                     {
                         diagnosis_printf("Toshiba");
 
@@ -209,7 +209,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
                         break;
                     }
 
-                    case 0x90u:
+                    case 0x90:
                     {
                         diagnosis_printf("Hynix");
 
@@ -231,7 +231,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_FACTORY_RESET:
+        case UDC_FACTORY_RESET:
         {
             diagnosis_printf("> r\n");
             diagnosis_printf("# Resetting to factory settings...\n");
@@ -242,12 +242,11 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_TOGGLE_CHIP:
+        case UDC_TOGGLE_CHIP:
         {
             diagnosis_printf("> s\n");
 
             config_s cfg;
-
             config_load_from_flash(&cfg);
 
             uint8_t chip_enabled = config_is_chip_enabled(&cfg);
@@ -270,7 +269,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_RUN_TEST:
+        case UDC_RUN_TEST:
         {
             diagnosis_printf("> t\n");
             diagnosis_printf("# Testing...\n");
@@ -291,7 +290,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_GET_CHIP_INFO:
+        case UDC_GET_CHIP_INFO:
         {
             diagnosis_printf("> v\n");
             diagnosis_printf("# SX FW v%d.%d\n", (uint8_t)(*firmware_version >> 8), (uint8_t)(*firmware_version));
@@ -310,29 +309,29 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
             break;
         }
 
-        case DIAGNOSIS_FPGA_INCREASE_WIDTH:
-        case DIAGNOSIS_FPGA_DECREASE_WIDTH:
-        case DIAGNOSIS_FPGA_INCREASE_RNG:
-        case DIAGNOSIS_FPGA_DECREASE_RNG:
-        case DIAGNOSIS_FPGA_INCREASE_OFFSET:
-        case DIAGNOSIS_FPGA_DECREASE_OFFSET:
+        case UDC_FPGA_WIDTH_INCREASE:
+        case UDC_FPGA_WIDTH_DECREASE:
+        case UDC_FPGA_RNG_INCREASE:
+        case UDC_FPGA_RNG_DECREASE:
+        case UDC_FPGA_OFFSET_INCREASE:
+        case UDC_FPGA_OFFSET_DECREASE:
         {
-            if (_usb->recv_buffer[0] == DIAGNOSIS_FPGA_INCREASE_WIDTH)
+            if (_usb->recv_buffer[0] == UDC_FPGA_WIDTH_INCREASE)
                 g_fpga_config.width += 1;
 
-            if (_usb->recv_buffer[0] == DIAGNOSIS_FPGA_DECREASE_WIDTH)
+            if (_usb->recv_buffer[0] == UDC_FPGA_WIDTH_DECREASE)
                 g_fpga_config.width -= 1;
 
-            if (_usb->recv_buffer[0] == DIAGNOSIS_FPGA_INCREASE_RNG)
+            if (_usb->recv_buffer[0] == UDC_FPGA_RNG_INCREASE)
                 g_fpga_config.rng += 1;
 
-            if (_usb->recv_buffer[0] == DIAGNOSIS_FPGA_DECREASE_RNG)
+            if (_usb->recv_buffer[0] == UDC_FPGA_RNG_DECREASE)
                 g_fpga_config.rng -= 1;
 
-            if (_usb->recv_buffer[0] == DIAGNOSIS_FPGA_INCREASE_OFFSET)
+            if (_usb->recv_buffer[0] == UDC_FPGA_OFFSET_INCREASE)
                 g_fpga_config.offset += 1;
 
-            if (_usb->recv_buffer[0] == DIAGNOSIS_FPGA_DECREASE_OFFSET)
+            if (_usb->recv_buffer[0] == UDC_FPGA_OFFSET_DECREASE)
                 g_fpga_config.offset -= 1;
 
             diagnosis_printf("# %d:%d %d\n", g_fpga_config.offset, g_fpga_config.rng, g_fpga_config.width);

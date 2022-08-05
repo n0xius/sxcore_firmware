@@ -4,6 +4,8 @@
 #include "bct.h"
 #include "delay.h"
 
+#include "mmc_defs.h"
+
 extern int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size );
 extern void* memcpy ( void* _Dst, const void* _Src, uint32_t _Size );
 extern void* memset ( void* _Dst, int _Val, uint32_t _Size );
@@ -32,17 +34,14 @@ uint8_t crc7(uint8_t *_buffer, uint32_t _size)
     return (uint8_t)crc;
 }
 
-void spi0_send_value_via_05_24(uint8_t _value)
+void mmc_spi_response_get(uint8_t *_response)
 {
-    spi0_send_data_24(0x05, 1, _value);
+    //spi0_send_05_via_24(0);
+    //spi0_recv_data_BA(_response, 32);
+    spi0_send_05_recv_BA(0, _response, 32);
 }
 
-void mmc_spi_response_get(uint8_t *response)
-{
-    spi0_send_value_via_05_24(0);
-    spi0_recv_data_BA(response, 32);
-}
-
+// fpga do mmc command
 void spi0_send_54()
 {
     fpga_spi0_reset_nss();
@@ -67,25 +66,26 @@ uint32_t mmc_send_command(uint8_t cmd, uint32_t argument, uint8_t *response, uin
 
     switch ( cmd )
     {
-        case 2:                                 // MMC_ALL_SEND_CID
-        case 9:                                 // MMC_SEND_CSD
+        case MMC_ALL_SEND_CID:
+        case MMC_SEND_CSD:
         {
             cmd_buffer[6] |= 8u;
             break;
         }
 
-        case 17:                                // MMC_READ_SINGLE_BLOCK
+        case MMC_READ_SINGLE_BLOCK:
         {
             cmd_buffer[6] = 3;
             break;
         }
 
-        case 24:                                // MMC_WRITE_BLOCK
+        case MMC_WRITE_BLOCK:
         {
             if ( _data )
             {
-                spi0_send_value_via_05_24(1);
-                spi0_send_data_BC(_data, 512);
+                //spi0_send_05_via_24(1);
+                //spi0_send_data_BC(_data, 512);
+                spi0_send_05_send_BC(1, _data, 512);
             }
 
             cmd_buffer[6] = 5;
@@ -93,8 +93,9 @@ uint32_t mmc_send_command(uint8_t cmd, uint32_t argument, uint8_t *response, uin
         }
     }
 
-    spi0_send_value_via_05_24(0);
-    spi0_send_data_BC(cmd_buffer, 7);
+    //spi0_send_05_via_24(0);
+    //spi0_send_data_BC(cmd_buffer, 7);
+    spi0_send_05_send_BC(0, cmd_buffer, 7);
     spi0_send_54();
 
     int timeout = 2000;
@@ -109,10 +110,11 @@ uint32_t mmc_send_command(uint8_t cmd, uint32_t argument, uint8_t *response, uin
 
     mmc_spi_response_get(response);
 
-    if ( cmd == 17 && _data ) // MMC_READ_SINGLE_BLOCK
+    if ( cmd == MMC_READ_SINGLE_BLOCK && _data )
     {
-        spi0_send_value_via_05_24(1);
-        spi0_recv_data_BA(_data, 512);
+        //spi0_send_05_via_24(1);
+        //spi0_recv_data_BA(_data, 512);
+        spi0_send_05_recv_BA(1, _data, 512);
     }
 
     return 0;
@@ -124,13 +126,13 @@ uint32_t mmc_spi_check_response(uint8_t* _response, uint32_t _value)
     return ((_value | 0x100) - (data | 0x100)) != 0 ? 0xFFFFFFFF : 0;
 }
 
-void fpga_reset_and_enable_mmc(uint8_t _enable_emmc)
+void fpga_reset_device_and_glitch(uint8_t _clock_stuck_glitch)
 {
     spi0_send_fpga_cmd(0x80);
     delay_ms(2);
     spi0_send_fpga_cmd(0);
 
-    if ( _enable_emmc != 1 )
+    if ( _clock_stuck_glitch != 1 )
         return;
 
     delay_ms(15);
@@ -144,79 +146,84 @@ uint32_t mmc_initialize(uint8_t *_cid)
 {
     uint8_t emmc_response[32];
 
-    fpga_reset_and_enable_mmc(1);
+    fpga_reset_device_and_glitch(1);
 
-    // MMC_GO_IDLE_STATE
-    if ( mmc_send_command(0, 0, emmc_response, 0) )                     // reset mmc device
-        return GW_STATUS_MMC_GO_IDLE_STATE_FAILED;                      // 0xBAD0010D
+    if ( mmc_send_command(MMC_GO_IDLE_STATE, 0, emmc_response, 0) )                     // reset mmc device
+        return GW_STATUS_MMC_GO_IDLE_STATE_FAILED;                                      // 0xBAD0010D
 
-    // MMC_SEND_OP_COND
-    if ( mmc_send_command(1, 0, emmc_response, 0) )                     // initialize mmc device
-        return GW_STATUS_MMC_SEND_OP_COND_FAILED;                       // 0xBAD0010E
+    if ( mmc_send_command(MMC_SEND_OP_COND, 0, emmc_response, 0) )                      // initialize mmc device
+        return GW_STATUS_MMC_SEND_OP_COND_FAILED;                                       // 0xBAD0010E
 
-    int retry = 100;
+    const int rca = 2; // default device address
 
-    // MMC_SEND_OP_COND
-    while ( !mmc_send_command(1, 0x40000080u, emmc_response, 0) )       // initialize mmc speed
+    for ( int retry = 100; retry != 0; --retry )
     {
-        if ( emmc_response[1] == 0xC0 )                                 // EXT_CSD_CARD_TYPE_HS400?
+        // get eMMC operation condition
+        if ( mmc_send_command(MMC_SEND_OP_COND, MMC_CARD_CCS | MMC_CARD_VDD_18, emmc_response, 0) )
+            break;
+
+        if ( emmc_response[1] != 0xC0 )                                             // SD_OCR_BUSY | SD_OCR_CCS
         {
-            // MMC_ALL_SEND_CID
-            if ( mmc_send_command(2, 0, emmc_response, 0) )             // retrieve card id
-                return GW_STATUS_MMC_ALL_SEND_CID_FAILED;               // 0xBAD00111
+            delay_ms(10);
+            continue;
+        }
+        
+        // retrieve card id
+        if ( mmc_send_command(MMC_ALL_SEND_CID, 0, emmc_response, 0) )              
+            return GW_STATUS_MMC_ALL_SEND_CID_FAILED;                               // 0xBAD00111
 
-            if ( _cid )
-            {
-                memcpy(_cid, (uint8_t*)emmc_response + 1, 16);
-                _cid[15] = crc7(_cid, 15) | 1;
-            }
-
-            // MMC_SET_RELATIVE_ADDR
-            if ( mmc_send_command(3, 0x00020000, emmc_response, 0) )   // check chip size by setting 0x40000 (512 x 512)?
-                return GW_STATUS_MMC_SET_RELATIVE_ADDR_FAILED;          // 0xBAD00112
-
-            if ( mmc_spi_check_response(emmc_response, 0x500) )
-                return GW_STATUS_MMC_SET_RELATIVE_ADDR_RESPONSE;        // 0xBAD00113
-
-            // MMC_SEND_CSD
-            if ( mmc_send_command(0, 0x00020000, emmc_response, 0) )      // get csd data
-                return GW_STATUS_MMC_SEND_CSD_FAILED;                   // 0xBAD00114
-
-            // MMC_SELECT_CARD
-            if ( mmc_send_command(7, 0x00020000, emmc_response, 0) )
-                return GW_STATUS_MMC_SELECT_CARD_FAILED;                // 0xBAD00115
-
-            if ( mmc_spi_check_response(emmc_response, 0x700) )
-                return GW_STATUS_MMC_SELECT_CARD_RESPONSE;              // 0xBAD00116
-
-            // MMC_SEND_STATUS
-            if ( mmc_send_command(13, 0x00020000, emmc_response, 0) )     // check if card is alive
-                return GW_STATUS_MMC_SEND_STATUS_FAILED;                // 0xBAD00117
-
-            if ( mmc_spi_check_response(emmc_response, 0x900) )
-                return GW_STATUS_MMC_SEND_STATUS_RESPONSE;              // 0xBAD00118
-
-            // MMC_SET_BLOCKLEN
-            if ( mmc_send_command(16, 512, emmc_response, 0) )         // set block size
-                return GW_STATUS_MMC_SET_BLOCKLEN_FAILED;               // 0xBAD00119
-
-            if ( mmc_spi_check_response(emmc_response, 0x900) )
-                return GW_STATUS_MMC_SET_BLOCKLEN_RESPONSE;             // 0xBAD0011A
-
-            // MMC_SWITCH
-            if ( mmc_send_command(6, 0x03B30100, emmc_response, 0) )    // EMMC_SWITCH_SELECT_PARTITION_ARG
-                return GW_STATUS_MMC_SWITCH_FAILED;                     // 0xBAD0011B
-
-            if ( mmc_spi_check_response(emmc_response, 0x900) )
-                return GW_STATUS_MMC_SWITCH_RESPONSE;                   // 0xBAD0011C
-
-            return 0;
+        if ( _cid )
+        {
+            memcpy(_cid, (uint8_t*)emmc_response + 1, 16);
+            _cid[15] = crc7(_cid, 15) | 1;
         }
 
-        delay_ms(10);
+        // set relative address to 0
+        if ( mmc_send_command(MMC_SET_RELATIVE_ADDR, rca << 16, emmc_response, 0) ) 
+            return GW_STATUS_MMC_SET_RELATIVE_ADDR_FAILED;                          // 0xBAD00112
 
-        if ( !--retry )
-            break;
+        // R1_STATE_IDENT?
+        if ( mmc_spi_check_response(emmc_response, 0x500) )
+            return GW_STATUS_MMC_SET_RELATIVE_ADDR_RESPONSE;                        // 0xBAD00113
+
+        // get csd data
+        if ( mmc_send_command(MMC_SEND_CSD, rca << 16, emmc_response, 0) )
+            return GW_STATUS_MMC_SEND_CSD_FAILED;                                   // 0xBAD00114
+
+        // select card
+        if ( mmc_send_command(MMC_SELECT_CARD, rca << 16, emmc_response, 0) )
+            return GW_STATUS_MMC_SELECT_CARD_FAILED;                                // 0xBAD00115
+
+        // R1_STATE_STBY?
+        if ( mmc_spi_check_response(emmc_response, 0x700) )
+            return GW_STATUS_MMC_SELECT_CARD_RESPONSE;                              // 0xBAD00116
+
+        // check if card is alive
+        if ( mmc_send_command(MMC_SEND_STATUS, rca << 16, emmc_response, 0) )
+            return GW_STATUS_MMC_SEND_STATUS_FAILED;                                // 0xBAD00117
+
+        // R1_STATE_TRAN
+        if ( mmc_spi_check_response(emmc_response, 0x900) )
+            return GW_STATUS_MMC_SEND_STATUS_RESPONSE;                              // 0xBAD00118
+
+        // set block size
+        if ( mmc_send_command(MMC_SET_BLOCKLEN, 512, emmc_response, 0) )
+            return GW_STATUS_MMC_SET_BLOCKLEN_FAILED;                               // 0xBAD00119
+
+        // R1_STATE_TRAN
+        if ( mmc_spi_check_response(emmc_response, 0x900) )
+            return GW_STATUS_MMC_SET_BLOCKLEN_RESPONSE;                             // 0xBAD0011A
+
+        // set mmc partition (to GPP?)
+        // argument = (MMC_SWITCH_MODE_WRITE_BYTE << 24) | (EXT_CSD_PART_CONFIG << 16) | (1 << 8)
+        if ( mmc_send_command(MMC_SWITCH, 0x03B30100, emmc_response, 0) )
+            return GW_STATUS_MMC_SWITCH_FAILED;                                     // 0xBAD0011B
+
+        // R1_STATE_TRAN
+        if ( mmc_spi_check_response(emmc_response, 0x900) )                         
+            return GW_STATUS_MMC_SWITCH_RESPONSE;                                   // 0xBAD0011C
+
+        return 0;
     }
 
     return GW_STATUS_MMC_SEND_OP_COND_TIMEOUT; // 0xBAD00110
@@ -226,8 +233,7 @@ uint32_t mmc_read(uint32_t _block_index, uint8_t *_buffer)
 {
     uint8_t emmc_response[32];
 
-    // MMC_READ_SINGLE_BLOCK
-    if ( mmc_send_command(17, _block_index, emmc_response, _buffer) )
+    if ( mmc_send_command(MMC_READ_SINGLE_BLOCK, _block_index, emmc_response, _buffer) )
         return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;          // 0xBAD0011D
 
     if ( mmc_spi_check_response(emmc_response, 0x900) )
@@ -245,15 +251,13 @@ uint32_t mmc_copy(uint32_t _dst, uint32_t _src, uint32_t _size)
 
     for ( uint32_t i = 0; i != _size; ++i )
     {
-        // MMC_READ_SINGLE_BLOCK
-        if ( mmc_send_command(17, i + _src, emmc_response, buffer) )
+        if ( mmc_send_command(MMC_READ_SINGLE_BLOCK, i + _src, emmc_response, buffer) )
             return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;      // 0xBAD0011D
 
         if ( mmc_spi_check_response(emmc_response, 0x900) )
             return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;    // 0xBAD0011E
 
-        // MMC_WRITE_BLOCK
-        if ( mmc_send_command(24, i + _dst, emmc_response, buffer) )
+        if ( mmc_send_command(MMC_WRITE_BLOCK, i + _dst, emmc_response, buffer) )
             return GW_STATUS_MMC_WRITE_BLOCK_FAILED;            // 0xBAD00120
 
         if ( mmc_spi_check_response(emmc_response, 0x900) )
@@ -270,12 +274,11 @@ uint32_t mmc_erase(uint32_t _dst, uint32_t _size)
 
     memset(buffer, 0, sizeof(buffer));
 
-    uint32_t block_size = (_size + 511) >> 9;
+    uint32_t block_size = (_size + 511) / 512;
 
     for ( uint32_t i = 0; i != block_size; ++i )
     {
-        // MMC_WRITE_BLOCK
-        if ( mmc_send_command(24, i + _dst, emmc_response, buffer) )
+        if ( mmc_send_command(MMC_WRITE_BLOCK, i + _dst, emmc_response, buffer) )
             return GW_STATUS_MMC_WRITE_BLOCK_FAILED;            // 0xBAD00120
 
         if ( mmc_spi_check_response(emmc_response, 0x900) )
@@ -292,25 +295,23 @@ uint32_t mmc_compare_and_overwrite_if_not_equal(uint32_t _block_index, const uin
 
     memset(buffer, 0, sizeof(buffer));
 
-    uint32_t block_size = (_size + 511) >> 9;
+    uint32_t block_size = (_size + 511) / 512;
 
     for ( uint32_t i = 0; i != block_size; ++i )
     {
-        // MMC_READ_SINGLE_BLOCK
-        if ( mmc_send_command(17, _block_index + i, emmc_response, buffer) )
+        if ( mmc_send_command(MMC_READ_SINGLE_BLOCK, _block_index + i, emmc_response, buffer) )
             return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;      // 0xBAD0011D
 
         if ( mmc_spi_check_response(emmc_response, 0x900) )
             return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;    // 0xBAD0011E
 
-        int safe_block_size = _size >= 512 ? 512 : _size;
+        int safe_block_size = _size < 512 ? _size : 512;
 
         if ( memcmp(buffer, _data, safe_block_size) != 0 )
         {
             memcpy(buffer, _data, safe_block_size);
 
-            // MMC_WRITE_BLOCK
-            if ( mmc_send_command(24, _block_index + i, emmc_response, buffer) )
+            if ( mmc_send_command(MMC_WRITE_BLOCK, _block_index + i, emmc_response, buffer) )
                 return GW_STATUS_MMC_WRITE_BLOCK_FAILED;            // 0xBAD00120
 
             if ( mmc_spi_check_response(emmc_response, 0x900) )
@@ -331,7 +332,7 @@ uint32_t write_bct_and_payload(uint8_t *_cid, uint8_t _device_type)
     const uint8_t *bct_data = _device_type == DEVICE_TYPE_ERISTA ? erista_bct : mariko_bct;
     uint32_t bct_size = _device_type == DEVICE_TYPE_ERISTA ? sizeof(erista_bct) : sizeof(mariko_bct);
 
-    uint32_t status = 0xBAD0010C;
+    uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; // 0xBAD0010C
 
     for(int i = 0; i < 6; ++i)
     {
@@ -375,7 +376,7 @@ uint32_t write_bct_and_payload(uint8_t *_cid, uint8_t _device_type)
 
 uint32_t reset_bct_and_erase_payload()
 {
-    uint32_t status = 0xBAD0010C;
+    uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; // 0xBAD0010C
 
     for(int i = 0; i < 6; ++i)
     {
@@ -383,23 +384,27 @@ uint32_t reset_bct_and_erase_payload()
         if ( status != 0 )
             continue;
 
+        // restore "Normal Firmware" BCT
         status = mmc_copy(0, 64, 20);
         if ( status != 0 )
             continue;
 
-        status = mmc_copy(0x20, 96, 20);
+        // restore "SafeMode Firmware" BCT
+        status = mmc_copy(32, 96, 20);
         if ( status != 0 )
             continue;
 
-        status = mmc_erase(0x1F88, 0x4000);
+        // erase stage 1 payload
+        status = mmc_erase(0x1F88, 0x4000); // 0x1F88 * 512 = 0x3F1000
         if ( status != 0 )
             continue;
 
-        status = mmc_erase(0x1F80, 0x1000);
+        // erase stage 0 payload
+        status = mmc_erase(0x1F80, 0x1000); // 0x1F80 * 512 = 0x3F0000
         if ( status != 0 )
             continue;
 
-        status = 0x900D0008;
+        status = GW_STATUS_BCT_PAYLOAD_SUCCESS; // 0x900D0008
         break;
     }
 
