@@ -8,10 +8,6 @@
 		},
 		{
 			"path": "libraries"
-		},
-		{
-			"name": "sxcore_firmware",
-			"path": "."
 		}
 	],
 	"settings": {

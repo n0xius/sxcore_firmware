@@ -1,5 +1,6 @@
 #include "gd32f3x0_it.h"
 
+#include "mmc_defs.h"
 #include "gw_defines.h"
 #include "configuration.h"
 #include "diagnostic.h"
@@ -319,362 +320,10 @@ uint32_t spi0_get_data_with_size(uint8_t *_buffer)
     return flags;
 }
 
-/*uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_cfg)
-{
-    config_s cfg;
-    fpga_config_s fpga_config;
-    spi_parser_s spi_parser;
-    uint8_t spi_data[512];
-
-    uint32_t was_config_loaded = _fpga_cfg ? 3 : 2;
-
-    if ( _fpga_cfg )
-        config_clear(&cfg);
-
-    int fpga_cfg_tries = !_fpga_cfg ? config_load_from_flash(&cfg) == GW_STATUS_CONFIG_INVALID_MAGIC : 0;
-
-    uint32_t device = get_device_type();
-    uint32_t glitch_offsets_size = device == DEVICE_TYPE_ERISTA ? 17 : 13;
-    uint16_t *glitch_offsets = (uint16_t*)(device == DEVICE_TYPE_ERISTA ? erista_glitch_offsets : mariko_glitch_offsets);
-
-    uint16_t adc_threshold = 0;
-    uint16_t adc_threshold_ranges[2] = { 0, 0 };
-    int was_successful_glitch = 0;
-    uint32_t status = setup_for_board_type(device, adc_threshold_ranges);
-
-    diagnosis_begin(_diag_print);
-
-    uint8_t* g_serial_number = ((uint8_t*)__bootloader + 0x150);
-    uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
-
-    diagnosis_hexdump_serial(_diag_print, g_serial_number);
-    diagnosis_hexdump_device_type(_diag_print, device);
-    diagnosis_hexdump_fw_version(_diag_print, *firmware_version);
-    diagnosis_hexdump_bldr_version(_diag_print, *g_bootloader_version);
-
-    toggle_blue_led_glow(1);
-
-    if ( was_config_loaded == 2 )
-        diagnosis_hexdump_config(_diag_print, &cfg);
-
-    int max_width_changes = device == DEVICE_TYPE_ERISTA ? 3 : 5;
-
-    uint8_t did_reset_fpga = 0;
-    if ( !status )
-    {
-        while ( TRUE )
-        {
-            uint16_t adc_value = 0;
-            status = reset_fpga_and_read_adc_value(_diag_print, adc_threshold_ranges[1], &adc_value);
-
-            if ( adc_threshold_ranges[1] <= adc_value )
-            {
-                adc_threshold = adc_threshold_ranges[1];
-                break;
-            }
-
-            if ( adc_value >= adc_threshold_ranges[0] )
-            {
-                adc_threshold = adc_threshold_ranges[0];
-                status = 0;
-                break;
-            }
-
-            if ( !did_reset_fpga )
-            {
-                spi0_send_fpga_cmd(0x80);
-                delay_ms(500);
-                spi0_send_fpga_cmd(0);
-                did_reset_fpga = 1;
-            }
-        }
-    }
-
-    int32_t width = device == DEVICE_TYPE_ERISTA ? 35 : 53;
-    uint32_t offset = device == DEVICE_TYPE_ERISTA ? 876 : 1210;
-
-    uint32_t saved_fpga_data = 0;
-
-    for ( int i = 0; i != cfg.saved_glitch_data; ++i )
-    {
-        width = cfg.width[i];
-
-        if (!saved_fpga_data && i >= 4)
-            saved_fpga_data = 4;
-    }
-
-    fpga_config.offset = offset;
-    fpga_config.rng = 0;
-    fpga_config.width = width;
-
-    if ( !status )
-    {
-        diagnosis_hexdump_spi_start(_diag_print);
-
-        uint8_t spi_cmds[128];
-        memset(spi_cmds, 0, sizeof(spi_cmds));
-
-        uint8_t spi_cmd_offset = 0;
-        int prev_fpga_cfg_tries = 0;
-        int cur_glitch_offset_idx = 0;
-        int cycles = 0;
-
-        while ( TRUE )
-        {
-            prev_fpga_cfg_tries = fpga_cfg_tries;
-            fpga_cfg_tries = 0;
-
-            ++cycles;
-
-            if ( was_config_loaded == 3 )
-            {
-                if ( cycles > 49 )
-                {
-                    status = GW_STATUS_GLITCH_TIMEOUT; // 0xBAD00124
-                    break;
-                }
-            }
-            else if ( was_config_loaded == 2 )
-            {
-                if ( cycles >= 1200 )
-                {
-                    status = GW_STATUS_GLITCH_TIMEOUT; // 0xBAD00124
-                    break;
-                }
-
-                if ( cycles >= 400 )
-                {
-                    cycles = 0;
-                    saved_fpga_data = 0;
-                    prev_fpga_cfg_tries = 1;
-                }
-            }
-
-            if ( adc_channel_read() < adc_threshold )
-            {
-                status = reset_fpga_and_read_adc_value(_diag_print, adc_threshold, 0);
-
-                if ( status )
-                    break;
-            }
-
-            if ( prev_fpga_cfg_tries )
-            {
-                uint8_t mmc_cid[16];
-                status = write_bct_and_payload(mmc_cid, device);
-                diagnosis_hexdump_mmc_cid(_diag_print, status, mmc_cid);
-
-                if ( status != GW_STATUS_BCT_PAYLOAD_SUCCESS )
-                    break;
-
-                status = 0;
-            }
-
-            if ( was_config_loaded == 3 )
-            {
-                fpga_config.width = _fpga_cfg->width;
-                fpga_config.offset = _fpga_cfg->offset;
-
-                int32_t clamped_rng = _fpga_cfg->rng;
-
-                if ( clamped_rng < 0 )
-                    clamped_rng = 0;
-                if ( clamped_rng > 255 )
-                    clamped_rng = 255;
-
-                fpga_config.rng = clamped_rng;
-            }
-            else
-            {
-                if ( saved_fpga_data > fpga_cfg_tries && cfg.saved_glitch_data )
-                {
-                    fpga_config.offset = cfg.offsets[get_random_number() % cfg.saved_glitch_data];
-                    ++fpga_cfg_tries;
-                }
-                else
-                {
-                    ++cur_glitch_offset_idx;
-
-                    if ( cur_glitch_offset_idx > glitch_offsets_size )
-                        cur_glitch_offset_idx = 0;
-
-                    fpga_config.offset = glitch_offsets[cur_glitch_offset_idx];
-                    fpga_cfg_tries = 0;
-                }
-
-                fpga_config.rng = (uint8_t)(get_random_number() & 3);
-            }
-
-            int32_t clamped_width = fpga_config.width;
-
-            if ( clamped_width < 2 )
-                clamped_width = 2;
-
-            if ( clamped_width > 200 )
-                clamped_width = 200;
-
-            fpga_config.width = clamped_width;
-
-            spi0_send_fpga_cmd(0); // switch to configuration mode
-
-            spi0_send_data_24(0x103, 120); // timeout
-            spi0_send_data_24(0x201, fpga_config.offset);
-            spi0_send_data_24(0x108, fpga_config.rng); // subcycle delay?
-            spi0_send_data_24(0x102, fpga_config.width);
-
-            spi0_send_fpga_cmd(0x80); // initialisation
-            delay_ms(1);
-            spi0_send_fpga_cmd(0x10); // switch to glitching mode
-
-            uint32_t spi_status, spi_status_without_two;
-            while ( TRUE )
-            {
-                spi_status = spi0_recv_0B_via_26();
-                spi_status_without_two = spi_status & 2;
-
-                if ( (spi_status & 2) != 0 || (spi_status & 4) != 0 )
-                    break;
-
-                spi0_recv_data_26(0x10Au);
-            }
-
-            uint8_t v43 = spi0_recv_data_26(0x10A);
-            uint32_t spi_data_len = spi0_get_data_with_size(spi_data);
-
-            int spi_data_type = spi_data_len < 5 ? 3 : 1;
-
-            spi_parser_init(&spi_parser, spi_data, spi_data_len);
-
-            while ( TRUE )
-            {
-                uint32_t data_type = spi_parser_parse(&spi_parser);
-
-                if ( data_type == 3 )
-                    break;
-                
-                if ( data_type == 1 && spi_data_type == 3 )
-                    spi_data_type = 1;
-                if ( data_type == 0 && (spi_parser.cmd == 17 || spi_parser.cmd == 0) )
-                    spi_data_type = 2;
-            }
-
-            uint8_t v30 = 0;
-
-            if (spi_status_without_two)
-                v30 = did_toggle_chip();
-
-            diagnosis_hexdump_fpga(_diag_print, &fpga_config, spi_status, spi_data_len, spi_data, v43, v30);
-
-            spi_cmds[spi_cmd_offset] = spi_data_type;
-            spi_cmd_offset = (spi_cmd_offset + 1) & 7;
-
-            int total_spi_commands = 0;
-            int total_type_1_spi_cmd = 0;
-            int total_type_2_spi_cmd = 0;
-            int total_type_3_spi_cmd = 0;
-
-            for ( int j = 0; j != 8; ++j )
-            {
-                if ( !spi_cmds[j] )
-                    continue;
-
-                ++total_spi_commands;
-
-                switch ( spi_cmds[j] )
-                {
-                    case 1:
-                        ++total_type_1_spi_cmd;
-                        break;
-                    case 2:
-                        ++total_type_2_spi_cmd;
-                        break;
-                    case 3:
-                        ++total_type_3_spi_cmd;
-                        break;
-                }
-            }
-
-            if ( total_spi_commands == 8 )
-            {
-                if ( total_type_3_spi_cmd != 8 )
-                {
-                    if ( max_width_changes <= total_type_1_spi_cmd || total_type_2_spi_cmd > 4 )
-                    {
-                        if (max_width_changes <= total_type_1_spi_cmd)
-                            fpga_config.width -= 1;
-                        else if ( total_type_2_spi_cmd > 4 )
-                            fpga_config.width += 1;
-
-                        memset(spi_cmds, 0, sizeof(spi_cmds));
-
-                        if (spi_status_without_two)
-                            if (v30) ++was_successful_glitch;
-                    }
-                }
-                else
-                    memset(spi_cmds, 0, sizeof(spi_cmds));
-            }
-
-            if ( total_type_3_spi_cmd != 8 )
-            {
-                if (spi_status_without_two)
-                    if (v30) ++was_successful_glitch;
-            }
-            else 
-                status = GW_STATUS_GLITCH_FAILED; // 0xBAD00108
-
-            if ( was_successful_glitch )
-            {
-                if ( was_config_loaded == 2 && config_save_fpga_cfg(&cfg, &fpga_config) == GW_STATUS_CONFIG_SUCCESS )
-                {
-                    uint32_t save_status = config_write_to_flash(&cfg);
-                    diagnosis_hexdump_fpga_cfg(_diag_print, &fpga_config, save_status);
-                }
-
-                if ( was_config_loaded == 2 || was_config_loaded == 3 )
-                {
-                    status = GW_STATUS_GLITCH_SUCCESS; // 0x900D0006
-                    break;
-                }
-            }
-        }
-    }
-
-    diagnosis_end(_diag_print);
-
-    toggle_blue_led_glow(0);
-
-    uint32_t led_color;
-
-    switch ( status )
-    {
-        case GW_STATUS_GLITCH_SUCCESS:              // 0x900D0006
-            led_color = LED_COLOR_GREEN;
-            break;
-        case GW_STATUS_GLITCH_FAILED:               // 0xBAD00108
-            led_color = LED_COLOR_WHITE;
-            break;
-        case GW_STATUS_ADC_CHANNEL_READ_MISMATCH:   // 0xBAD00122
-            led_color = LED_COLOR_PINK;
-            break;
-        default:
-            led_color = LED_COLOR_RED;
-            break;
-    }
-
-    set_led_color(led_color);
-    return status;
-}*/
-
 uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_cfg)
 {
-    uint32_t offset;
     unsigned int i;
-    int32_t width;
-    fpga_config_s fpga_config;
     config_s cfg;
-    uint8_t spi_cmds[128];
-    uint8_t spi_data[512];
 
     uint32_t was_invalid_config = 0;
     uint32_t was_config_loaded;
@@ -720,6 +369,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
     
     int maxWidthChanges = device == DEVICE_TYPE_ERISTA ? 3 : 5;
 
+    uint8_t spi_cmds[128];
     memset(spi_cmds, 0, sizeof(spi_cmds));
 	
     if ( !return_status )
@@ -754,21 +404,15 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
         }
     }
 
-    if ( device == DEVICE_TYPE_ERISTA )
-    {
-        width = 35;
-        offset = 876;
-    }
-    else
-    {
-        width = 53;
-		offset = 1210;
-    }
+    int32_t width = device == DEVICE_TYPE_ERISTA ? 35 : 53;
+    uint32_t offset = device == DEVICE_TYPE_ERISTA ? 876 : 1210;
 
     for ( i = 0; i != cfg.saved_glitch_data; ++i )
         width = cfg.width[i];
     
-    uint32_t amountOfGlitchData = (i >= 4) ? 4 : 0;
+    uint32_t saved_pulse_widths = (i >= 4) ? 4 : 0;
+
+    fpga_config_s fpga_config;
 
     fpga_config.offset = offset;
     fpga_config.rng = 0;
@@ -789,7 +433,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             {
                 if ( v17 > 49 )
                 {
-					return_status = 0xBAD00124;
+                    return_status = GW_STATUS_GLITCH_TIMEOUT; // 0xBAD00124
                     break;
 				}
             }
@@ -797,14 +441,14 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             {
                 if ( v17 >= 1200 )
                 {
-					return_status = 0xBAD00124;
+                    return_status = GW_STATUS_GLITCH_TIMEOUT; // 0xBAD00124
                     break;
                 }
 
                 if ( v17 >= 400 )
                 {
                     v55 = v57;
-                    amountOfGlitchData = v57;
+                    saved_pulse_widths = v57;
                     should_rewrite_payload = 1;
                 }
             }
@@ -818,10 +462,10 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
             if ( should_rewrite_payload )
             {
-                uint8_t mmc_cid[16];
-                return_status = write_bct_and_payload(mmc_cid, device);
-                diagnosis_hexdump_mmc_cid(_diag_print, return_status, mmc_cid);
-                if ( return_status != 0x900D0008 )
+                uint8_t cid[16];
+                return_status = write_bct_and_payload(cid, device);
+                diagnosis_hexdump_mmc_cid(_diag_print, return_status, cid);
+                if ( return_status != GW_STATUS_BCT_PAYLOAD_SUCCESS ) // 0x900D0008
                     break;
 
                 v57 = 0;
@@ -841,7 +485,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             }
             else
             {
-                if ( amountOfGlitchData > v57 && cfg.saved_glitch_data )
+                if ( saved_pulse_widths > v57 && cfg.saved_glitch_data )
                 {
                     ++v57;
                     fpga_config.offset = cfg.offsets[get_random_number() % cfg.saved_glitch_data];
@@ -861,17 +505,17 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             if ( fpga_config.width > 200 )
                 fpga_config.width = 200;
 			
-			if ( fpga_config.width <= 1 )
+			if ( fpga_config.width < 2 )
 				fpga_config.width = 2;
 
             spi0_send_fpga_cmd(0);
-            spi0_send_data_24(0x103u, 120u);
-            spi0_send_data_24(0x201u, fpga_config.offset);
-            spi0_send_data_24(0x108u, fpga_config.rng);
-            spi0_send_data_24(0x102u, fpga_config.width);
-            spi0_send_fpga_cmd(0x80u);
+            spi0_send_data_24(0x103, 120);
+            spi0_send_data_24(0x201, fpga_config.offset);
+            spi0_send_data_24(0x108, fpga_config.rng);
+            spi0_send_data_24(0x102, fpga_config.width);
+            spi0_send_fpga_cmd(0x80);
             delay_ms(1);
-            spi0_send_fpga_cmd(0x10u);
+            spi0_send_fpga_cmd(0x10);
 			
             uint32_t spi_status;
 
@@ -882,11 +526,12 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
                 if ( (spi_status & 2) != 0 || (spi_status & 4) != 0 )
                     break;
 
-                spi0_recv_data_26(0x10Au);
+                spi0_recv_data_26(0x10A);
             }
 
-            uint8_t v43 = spi0_recv_data_26(0x10Au);
+            uint8_t v43 = spi0_recv_data_26(0x10A);
 			
+            uint8_t spi_data[512];
             uint32_t spi_data_len = spi0_get_data_with_size(spi_data);
 			int spi_data_type = spi_data_len >= 5 ? 1 : 3;
 
@@ -901,7 +546,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
                 if ( data_type == 0 )
 				{
-					if ( spi_parser.cmd == 17 || spi_parser.cmd  == 0 )
+					if ( spi_parser.cmd == MMC_READ_SINGLE_BLOCK || spi_parser.cmd  == MMC_GO_IDLE_STATE )
 						spi_data_type = 2;
 				}
                 else 
@@ -951,7 +596,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
                 if ( total_type_3_spi_cmd == 8 )
 				{
                     memset(spi_cmds, 0, sizeof(spi_cmds));
-                    return_status = 0xBAD00108;
+                    return_status = GW_STATUS_GLITCH_FAILED; // 0xBAD00108
                     break;
 				}
 				else
@@ -977,7 +622,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             }
             else if ( total_type_3_spi_cmd == 8 )
             {
-                return_status = 0xBAD00108;
+                return_status = GW_STATUS_GLITCH_FAILED; // 0xBAD00108
 				break;
             }
 
@@ -985,7 +630,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
             {
                 if ( was_config_loaded == 3 )
                 {
-                    return_status = 0x900D0006;
+                    return_status = GW_STATUS_GLITCH_SUCCESS; // 0x900D0006
                     break;
 				}
 
@@ -997,7 +642,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
                         diagnosis_hexdump_fpga_cfg(_diag_print, &fpga_config, save_status);
                     }
 
-                    return_status = 0x900D0006;
+                    return_status = GW_STATUS_GLITCH_SUCCESS; // 0x900D0006
                     break;
                 }
             }
@@ -1011,15 +656,15 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 	uint32_t led_color;
     switch ( return_status )
     {
-        case 0x900D0006:
+        case GW_STATUS_GLITCH_SUCCESS:
             led_color = 0xFF00;
             break;
 
-        case 0xBAD00108:
+        case GW_STATUS_GLITCH_FAILED:
             led_color = 0xFFFFFF;
             break;
 
-        case 0xBAD00122:
+        case GW_STATUS_ADC_CHANNEL_READ_MISMATCH:
             led_color = 0xFF00FF;
             break;
 
