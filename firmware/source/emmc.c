@@ -148,11 +148,11 @@ uint32_t mmc_initialize(uint8_t *_cid)
 
 	fpga_reset_device_and_glitch(1);
 
-	if ( mmc_send_command(MMC_GO_IDLE_STATE, 0, emmc_response, 0) )                     // reset mmc device
-		return GW_STATUS_MMC_GO_IDLE_STATE_FAILED;                                      // 0xBAD0010D
+	if ( mmc_send_command(MMC_GO_IDLE_STATE, 0, emmc_response, 0) )					// reset mmc device
+		return GW_STATUS_MMC_GO_IDLE_STATE_FAILED;									// 0xBAD0010D
 
-	if ( mmc_send_command(MMC_SEND_OP_COND, 0, emmc_response, 0) )                      // initialize mmc device
-		return GW_STATUS_MMC_SEND_OP_COND_FAILED;                                       // 0xBAD0010E
+	if ( mmc_send_command(MMC_SEND_OP_COND, 0, emmc_response, 0) )					// initialize mmc device
+		return GW_STATUS_MMC_SEND_OP_COND_FAILED;									// 0xBAD0010E
 
 	const int rca = 2; // default device address
 
@@ -162,7 +162,7 @@ uint32_t mmc_initialize(uint8_t *_cid)
 		if ( mmc_send_command(MMC_SEND_OP_COND, MMC_CARD_CCS | MMC_CARD_VDD_18, emmc_response, 0) )
 			break;
 
-		if ( emmc_response[1] != 0xC0 )                                             // SD_OCR_BUSY | SD_OCR_CCS
+		if ( emmc_response[1] != 0xC0 ) // SD_OCR_BUSY | SD_OCR_CCS
 		{
 			delay_ms(10);
 			continue;
@@ -170,7 +170,7 @@ uint32_t mmc_initialize(uint8_t *_cid)
 		
 		// retrieve card id
 		if ( mmc_send_command(MMC_ALL_SEND_CID, 0, emmc_response, 0) )              
-			return GW_STATUS_MMC_ALL_SEND_CID_FAILED;                               // 0xBAD00111
+			return GW_STATUS_MMC_ALL_SEND_CID_FAILED;			// 0xBAD00111
 
 		if ( _cid )
 		{
@@ -180,53 +180,53 @@ uint32_t mmc_initialize(uint8_t *_cid)
 
 		// set relative address to 0
 		if ( mmc_send_command(MMC_SET_RELATIVE_ADDR, rca << 16, emmc_response, 0) ) 
-			return GW_STATUS_MMC_SET_RELATIVE_ADDR_FAILED;                          // 0xBAD00112
+			return GW_STATUS_MMC_SET_RELATIVE_ADDR_FAILED;		// 0xBAD00112
 
 		// R1_STATE_IDENT?
 		if ( mmc_spi_check_response(emmc_response, 0x500) )
-			return GW_STATUS_MMC_SET_RELATIVE_ADDR_RESPONSE;                        // 0xBAD00113
+			return GW_STATUS_MMC_SET_RELATIVE_ADDR_RESPONSE;	// 0xBAD00113
 
 		// get csd data
 		if ( mmc_send_command(MMC_SEND_CSD, rca << 16, emmc_response, 0) )
-			return GW_STATUS_MMC_SEND_CSD_FAILED;                                   // 0xBAD00114
+			return GW_STATUS_MMC_SEND_CSD_FAILED;				// 0xBAD00114
 
 		// select card
 		if ( mmc_send_command(MMC_SELECT_CARD, rca << 16, emmc_response, 0) )
-			return GW_STATUS_MMC_SELECT_CARD_FAILED;                                // 0xBAD00115
+			return GW_STATUS_MMC_SELECT_CARD_FAILED;			// 0xBAD00115
 
 		// R1_STATE_STBY?
 		if ( mmc_spi_check_response(emmc_response, 0x700) )
-			return GW_STATUS_MMC_SELECT_CARD_RESPONSE;                              // 0xBAD00116
+			return GW_STATUS_MMC_SELECT_CARD_RESPONSE;			// 0xBAD00116
 
 		// check if card is alive
 		if ( mmc_send_command(MMC_SEND_STATUS, rca << 16, emmc_response, 0) )
-			return GW_STATUS_MMC_SEND_STATUS_FAILED;                                // 0xBAD00117
+			return GW_STATUS_MMC_SEND_STATUS_FAILED;			// 0xBAD00117
 
 		// R1_STATE_TRAN
 		if ( mmc_spi_check_response(emmc_response, 0x900) )
-			return GW_STATUS_MMC_SEND_STATUS_RESPONSE;                              // 0xBAD00118
+			return GW_STATUS_MMC_SEND_STATUS_RESPONSE;			// 0xBAD00118
 
 		// set block size
 		if ( mmc_send_command(MMC_SET_BLOCKLEN, 512, emmc_response, 0) )
-			return GW_STATUS_MMC_SET_BLOCKLEN_FAILED;                               // 0xBAD00119
+			return GW_STATUS_MMC_SET_BLOCKLEN_FAILED;			// 0xBAD00119
 
 		// R1_STATE_TRAN
 		if ( mmc_spi_check_response(emmc_response, 0x900) )
-			return GW_STATUS_MMC_SET_BLOCKLEN_RESPONSE;                             // 0xBAD0011A
+			return GW_STATUS_MMC_SET_BLOCKLEN_RESPONSE;			// 0xBAD0011A
 
 		// set mmc partition (to GPP?)
 		// argument = (MMC_SWITCH_MODE_WRITE_BYTE << 24) | (EXT_CSD_PART_CONFIG << 16) | (1 << 8)
 		if ( mmc_send_command(MMC_SWITCH, 0x03B30100, emmc_response, 0) )
-			return GW_STATUS_MMC_SWITCH_FAILED;                                     // 0xBAD0011B
+			return GW_STATUS_MMC_SWITCH_FAILED;					// 0xBAD0011B
 
 		// R1_STATE_TRAN
 		if ( mmc_spi_check_response(emmc_response, 0x900) )                         
-			return GW_STATUS_MMC_SWITCH_RESPONSE;                                   // 0xBAD0011C
+			return GW_STATUS_MMC_SWITCH_RESPONSE;				// 0xBAD0011C
 
 		return 0;
 	}
 
-	return GW_STATUS_MMC_SEND_OP_COND_TIMEOUT; // 0xBAD00110
+	return GW_STATUS_MMC_SEND_OP_COND_TIMEOUT;					// 0xBAD00110
 }
 
 uint32_t mmc_read(uint32_t _block_index, uint8_t *_buffer)
@@ -234,10 +234,10 @@ uint32_t mmc_read(uint32_t _block_index, uint8_t *_buffer)
 	uint8_t emmc_response[32];
 
 	if ( mmc_send_command(MMC_READ_SINGLE_BLOCK, _block_index, emmc_response, _buffer) )
-		return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;          // 0xBAD0011D
+		return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED; 			// 0xBAD0011D
 
 	if ( mmc_spi_check_response(emmc_response, 0x900) )
-		return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;        // 0xBAD0011E
+		return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;		// 0xBAD0011E
 
 	return 0;
 }
@@ -252,16 +252,16 @@ uint32_t mmc_copy(uint32_t _dst, uint32_t _src, uint32_t _size)
 	for ( uint32_t i = 0; i != _size; ++i )
 	{
 		if ( mmc_send_command(MMC_READ_SINGLE_BLOCK, i + _src, emmc_response, buffer) )
-			return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;      // 0xBAD0011D
+			return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;		// 0xBAD0011D
 
 		if ( mmc_spi_check_response(emmc_response, 0x900) )
-			return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;    // 0xBAD0011E
+			return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;	// 0xBAD0011E
 
 		if ( mmc_send_command(MMC_WRITE_BLOCK, i + _dst, emmc_response, buffer) )
-			return GW_STATUS_MMC_WRITE_BLOCK_FAILED;            // 0xBAD00120
+			return GW_STATUS_MMC_WRITE_BLOCK_FAILED;			// 0xBAD00120
 
 		if ( mmc_spi_check_response(emmc_response, 0x900) )
-			return GW_STATUS_MMC_WRITE_BLOCK_RESPONSE;          // 0xBAD00121
+			return GW_STATUS_MMC_WRITE_BLOCK_RESPONSE;			// 0xBAD00121
 	}
 
 	return 0;
@@ -279,10 +279,10 @@ uint32_t mmc_erase(uint32_t _dst, uint32_t _size)
 	for ( uint32_t i = 0; i != block_size; ++i )
 	{
 		if ( mmc_send_command(MMC_WRITE_BLOCK, i + _dst, emmc_response, buffer) )
-			return GW_STATUS_MMC_WRITE_BLOCK_FAILED;            // 0xBAD00120
+			return GW_STATUS_MMC_WRITE_BLOCK_FAILED;			// 0xBAD00120
 
 		if ( mmc_spi_check_response(emmc_response, 0x900) )
-			return GW_STATUS_MMC_WRITE_BLOCK_RESPONSE;          // 0xBAD00121
+			return GW_STATUS_MMC_WRITE_BLOCK_RESPONSE;			// 0xBAD00121
 	}
 
 	return 0;
@@ -300,10 +300,10 @@ uint32_t mmc_compare_and_overwrite_if_not_equal(uint32_t _block_index, const uin
 	for ( uint32_t i = 0; i != block_size; ++i )
 	{
 		if ( mmc_send_command(MMC_READ_SINGLE_BLOCK, _block_index + i, emmc_response, buffer) )
-			return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;      // 0xBAD0011D
+			return GW_STATUS_MMC_READ_SINGLE_BLOCK_FAILED;		// 0xBAD0011D
 
 		if ( mmc_spi_check_response(emmc_response, 0x900) )
-			return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;    // 0xBAD0011E
+			return GW_STATUS_MMC_READ_SINGLE_BLOCK_RESPONSE;	// 0xBAD0011E
 
 		int safe_block_size = _size < 512 ? _size : 512;
 
@@ -312,10 +312,10 @@ uint32_t mmc_compare_and_overwrite_if_not_equal(uint32_t _block_index, const uin
 			memcpy(buffer, _data, safe_block_size);
 
 			if ( mmc_send_command(MMC_WRITE_BLOCK, _block_index + i, emmc_response, buffer) )
-				return GW_STATUS_MMC_WRITE_BLOCK_FAILED;            // 0xBAD00120
+				return GW_STATUS_MMC_WRITE_BLOCK_FAILED;		// 0xBAD00120
 
 			if ( mmc_spi_check_response(emmc_response, 0x900) )
-				return GW_STATUS_MMC_WRITE_BLOCK_RESPONSE;          // 0xBAD00121
+				return GW_STATUS_MMC_WRITE_BLOCK_RESPONSE;		// 0xBAD00121
 		}
 
 		_size -= safe_block_size;
@@ -332,7 +332,7 @@ uint32_t write_bct_and_payload(uint8_t *_cid, uint8_t _device_type)
 	const uint8_t *bct_data = _device_type == DEVICE_TYPE_ERISTA ? erista_bct : mariko_bct;
 	uint32_t bct_size = _device_type == DEVICE_TYPE_ERISTA ? sizeof(erista_bct) : sizeof(mariko_bct);
 
-	uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; // 0xBAD0010C
+	uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; 		// 0xBAD0010C
 
 	for(int i = 0; i < 6; ++i)
 	{
@@ -367,7 +367,7 @@ uint32_t write_bct_and_payload(uint8_t *_cid, uint8_t _device_type)
 		if ( status != 0 )
 			continue;
 
-		status = GW_STATUS_BCT_PAYLOAD_SUCCESS; // 0x900D0008
+		status = GW_STATUS_BCT_PAYLOAD_SUCCESS; 				// 0x900D0008
 		break;
 	}
 
@@ -376,7 +376,7 @@ uint32_t write_bct_and_payload(uint8_t *_cid, uint8_t _device_type)
 
 uint32_t reset_bct_and_erase_payload()
 {
-	uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; // 0xBAD0010C
+	uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; 		// 0xBAD0010C
 
 	for(int i = 0; i < 6; ++i)
 	{
@@ -395,16 +395,16 @@ uint32_t reset_bct_and_erase_payload()
 			continue;
 
 		// erase stage 1 payload
-		status = mmc_erase(0x1F88, 0x4000); // 0x1F88 * 512 = 0x3F1000
+		status = mmc_erase(0x1F88, 0x4000);
 		if ( status != 0 )
 			continue;
 
 		// erase stage 0 payload
-		status = mmc_erase(0x1F80, 0x1000); // 0x1F80 * 512 = 0x3F0000
+		status = mmc_erase(0x1F80, 0x1000);
 		if ( status != 0 )
 			continue;
 
-		status = GW_STATUS_BCT_PAYLOAD_SUCCESS; // 0x900D0008
+		status = GW_STATUS_BCT_PAYLOAD_SUCCESS; 				// 0x900D0008
 		break;
 	}
 

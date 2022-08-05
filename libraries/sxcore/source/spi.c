@@ -260,7 +260,7 @@ void spi0_send_data_24(uint32_t _cmd_and_size, uint32_t _data)
 	}
 
 	fpga_spi0_reset_nss();
-	spi0_send_data(send_buffer, cmd_len + 2);
+	spi0_send_data(buffer, cmd_len + 2);
 
 	fpga_spi0_wait_and_set_nss();
 }

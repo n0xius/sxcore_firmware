@@ -22,18 +22,22 @@
 #define GW_STATUS_GENERIC_ERROR ((uint32_t)0xBAD00000)
 
 #define GW_STATUS_RESET ((uint32_t)0xBAD00002)
-//#define GW_STATUS_ERROR_04 ((uint32_t)0xBAD00004)
+//#define GW_STATUS_ERROR_04 ((uint32_t)0xBAD00004) // related to spi0_setup
 
 #define GW_STATUS_AUTH_REQUIRED ((uint32_t)0xBAD00008)
 
 #define GW_STATUS_FW_UPDATE_ERROR ((uint32_t)0xBAD00009)
 #define GW_STATUS_FW_UPDATE_MAC_MISMATCH ((uint32_t)0xBAD0000A)
+//#define GW_STATUS_ERROR_0B ((uint32_t)0xBAD0000B) // related to spi0_read_status
 
 //#define GW_STATUS_ERROR_0E ((uint32_t)0xBAD0000E) // related to spi0_setup
-//#define GW_STATUS_ERROR_0F ((uint32_t)0xBAD0000F) // related to 0xFACE0036
+//#define GW_STATUS_ERROR_0F ((uint32_t)0xBAD0000F) // related to spi0_read_status & 0xFACE0036
+
+//#define GW_STATUS_ERROR_10 ((uint32_t)0xBAD00010) // related to spi0_read_status
+//#define GW_STATUS_ERROR_11 ((uint32_t)0xBAD00011) // related to spi0_read_status
 
 //#define GW_STATUS_ERROR_12 ((uint32_t)0xBAD00012) // related to 0xFACE0041
-//#define GW_STATUS_ERROR_3B ((uint32_t)0xBAD00013) // related to 0xFACE003B
+//#define GW_STATUS_ERROR_13 ((uint32_t)0xBAD00013) // related to 0xFACE003B
 
 #define GW_STATUS_NO_OR_UNKNOWN_DEVICE ((uint32_t)0xBAD00107) // no/unknown device (can happen if console is off) 
 #define GW_STATUS_GLITCH_FAILED ((uint32_t)0xBAD00108) // failed to glitch
