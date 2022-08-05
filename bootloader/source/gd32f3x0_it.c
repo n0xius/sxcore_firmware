@@ -18,27 +18,27 @@ void usbfs_irq_handler(void)
 
 int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size )
 {
-    for(uint32_t i = 0; i < _Size; ++i)
-    {
-        if (((uint8_t*)_Ptr1)[i] != ((uint8_t*)_Ptr2)[i])
-            return ((uint8_t*)_Ptr1)[i] > ((uint8_t*)_Ptr2)[i] ? -i : i;
-    }
+	for(uint32_t i = 0; i < _Size; ++i)
+	{
+		if (((uint8_t*)_Ptr1)[i] != ((uint8_t*)_Ptr2)[i])
+			return ((uint8_t*)_Ptr1)[i] > ((uint8_t*)_Ptr2)[i] ? -i : i;
+	}
 
-    return 0;
+	return 0;
 }
 
 void* memcpy ( void* _Dst, const void* _Src, uint32_t _Size )
 {
-    for(uint32_t i = 0; i < _Size; ++i)
-        ((uint8_t*)_Dst)[i] = ((uint8_t*)_Src)[i];
+	for(uint32_t i = 0; i < _Size; ++i)
+		((uint8_t*)_Dst)[i] = ((uint8_t*)_Src)[i];
 
-    return _Dst;
+	return _Dst;
 }
 
 void* memset ( void* _Dst, int _Val, uint32_t _Size )
 {
-    for(uint32_t i = 0; i < _Size; ++i)
-        ((uint8_t*)_Dst)[i] = (uint8_t)_Val;
+	for(uint32_t i = 0; i < _Size; ++i)
+		((uint8_t*)_Dst)[i] = (uint8_t)_Val;
 
-    return _Dst;
+	return _Dst;
 }
