@@ -29,9 +29,11 @@
 #define GW_STATUS_FW_UPDATE_ERROR ((uint32_t)0xBAD00009)
 #define GW_STATUS_FW_UPDATE_MAC_MISMATCH ((uint32_t)0xBAD0000A)
 
-//#define GW_STATUS_ERROR_0E ((uint32_t)0xBAD0000E)
+//#define GW_STATUS_ERROR_0E ((uint32_t)0xBAD0000E) // related to spi0_setup
+//#define GW_STATUS_ERROR_0F ((uint32_t)0xBAD0000F) // related to 0xFACE0036
 
-//#define GW_STATUS_ERROR_12 0xBAD00012 // related to 0xFACE0041
+//#define GW_STATUS_ERROR_12 ((uint32_t)0xBAD00012) // related to 0xFACE0041
+//#define GW_STATUS_ERROR_3B ((uint32_t)0xBAD00013) // related to 0xFACE003B
 
 #define GW_STATUS_NO_OR_UNKNOWN_DEVICE ((uint32_t)0xBAD00107) // no/unknown device (can happen if console is off) 
 #define GW_STATUS_GLITCH_FAILED ((uint32_t)0xBAD00108) // failed to glitch

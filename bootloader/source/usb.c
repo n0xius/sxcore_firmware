@@ -378,7 +378,7 @@ void handle_usb_transfers()
 			{
 				if (status_code != 0)
 				{
-					status_code = 0xBAD00002;
+					status_code = GW_STATUS_RESET; //0xBAD00002
 					usb_send_dword(status_code);
 				}
 			}
