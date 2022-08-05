@@ -322,7 +322,6 @@ uint32_t spi0_get_data_with_size(uint8_t *_buffer)
 
 uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_cfg)
 {
-    unsigned int i;
     config_s cfg;
 
     uint32_t was_invalid_config = 0;
@@ -367,7 +366,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 	if ( was_config_loaded == 2 )
         diagnosis_hexdump_config(_diag_print, &cfg);
     
-    int maxWidthChanges = device == DEVICE_TYPE_ERISTA ? 3 : 5;
+    int max_width_changes = device == DEVICE_TYPE_ERISTA ? 3 : 5;
 
     uint8_t spi_cmds[128];
     memset(spi_cmds, 0, sizeof(spi_cmds));
@@ -407,6 +406,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
     int32_t width = device == DEVICE_TYPE_ERISTA ? 35 : 53;
     uint32_t offset = device == DEVICE_TYPE_ERISTA ? 876 : 1210;
 
+    unsigned int i;
     for ( i = 0; i != cfg.saved_glitch_data; ++i )
         width = cfg.width[i];
     
@@ -601,7 +601,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 				}
 				else
 				{
-					if ( maxWidthChanges <= total_type_1_spi_cmd )
+					if ( max_width_changes <= total_type_1_spi_cmd )
 					{
 						--fpga_config.width;
 						memset(spi_cmds, 0, sizeof(spi_cmds));
