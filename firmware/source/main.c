@@ -285,11 +285,11 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 					}
 
 					spi0_get_fpga_cmd();
-					spi0_send_11_bytes_0_15_f2_f1_c4(32);
-					spi0_send_11_bytes_0_15_f2_f1_c4(96);
-					spi0_send_11_bytes_0_15_f2_f1_c4(160);
-					spi0_send_11_bytes_0_15_f2_f1_c4(224);
-					spi0_send_4();
+					spi0_send_11_bytes_0_15_f2_f1_c4(0x20); // write trim0
+					spi0_send_11_bytes_0_15_f2_f1_c4(0x60); // write trim1
+					spi0_send_11_bytes_0_15_f2_f1_c4(0xA0); // write trim2
+					spi0_send_11_bytes_0_15_f2_f1_c4(0xE0); // write trim3
+					spi0_send_4(); // disable write
 
 					status = GW_STATUS_SUCCESS;
 					break;
@@ -308,7 +308,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 						spi0_get_fpga_cmd();
 					}
 
-					spi0_write_11_bytes_via_02(deciphered_data);
+					spi0_write_11_bytes_via_02(deciphered_data); // write trim
 					status = spi0_read_status();
 
 					if ( status == 0xBAD0000F )
@@ -392,14 +392,14 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			{
 				//sub_8005BB8();
 				{
-					spi0_transfer_83(0);
+					spi0_transfer_83(0x00);
 				}
 
 				spi0_send_8_bytes_via_82();
 
 				//sub_8005BB2();
 				{
-					spi0_transfer_83(16);
+					spi0_transfer_83(0x10);
 				}
 
 				spi0_get_fpga_cmd();
@@ -419,14 +419,14 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 					//sub_8005BB2();
 					{
-						spi0_transfer_83(16);
+						spi0_transfer_83(0x10);
 					}
 
-					spi0_send_03_read_8_bytes(32, data_from_03);
+					spi0_send_03_read_8_bytes(0x20, data_from_03);
 					status = GW_STATUS_SUCCESS;
 				}
 
-				status = (data_from_03[0] & 48) != 48 ? 0xBAD00012 : GW_STATUS_SUCCESS;
+				status = (data_from_03[0] & 0x30) != 0x30 ? 0xBAD00012 : GW_STATUS_SUCCESS;
 			}
 
 			break;
@@ -453,14 +453,14 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			break;
 		}
 
-		case 0xFACE003F:
+		case USB_CMD_GET_DATA_FROM_LIS3DH:
 		{
 			// spi1_setup_and_send_57
 			{
 				initialize_spi1();
 
-				uint8_t buffer = 0x57;
-				spi1_send_data(32, &buffer, 1);
+				uint8_t buffer = 0b01010111; // HR / Normal / Low-power mode (100 Hz), X-enable, Y-enable, Z-enable
+				spi1_send_data(0x20, &buffer, 1); // CTRL_REG1
 			}
 
 			uint8_t data_from_8F = 0;
@@ -469,7 +469,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			// uint32_t spi1_recv_8F
 			{
 				uint8_t buffer = 0;
-				spi1_recv_data(0x8F, &buffer, 1);
+				spi1_recv_data(0x8F, &buffer, 1); // WHO_AM_I
 				data_from_8F = buffer;
 			}
 
@@ -479,9 +479,9 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 				spi1_recv_data(0xE8, (uint8_t*)buffer, 6);
 
-				data_from_E8[0] = buffer[0];
-				data_from_E8[1] = buffer[1];
-				data_from_E8[2] = buffer[2];
+				data_from_E8[0] = buffer[0]; // read x axis
+				data_from_E8[1] = buffer[1]; // read y axis
+				data_from_E8[2] = buffer[2]; // read z axis
 			}
 
 			*(uint32_t*)(_usb->send_buffer + 0) = data_from_8F;
@@ -528,10 +528,10 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 				//sub_8005BB2();
 				{
-					spi0_transfer_83(16);
+					spi0_transfer_83(0x10);
 				}
 
-				spi0_send_03_read_8_bytes(32, _usb->send_buffer);
+				spi0_send_03_read_8_bytes(0x20, _usb->send_buffer);
 				status = GW_STATUS_SUCCESS;
 			}
 

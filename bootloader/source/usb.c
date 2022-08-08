@@ -293,9 +293,9 @@ uint32_t bootloader_handle_usb_command()
 		case USB_CMD_GET_OB_PROTECTION:                 // 0x0D15EA5E
 		{
 			usb_send_dword(GW_STATUS_SEND_OB_DATA); // 0x900D0004
-			usb_send_dword(*(uint32_t*)(OB + 0));   // OB_SPC & OB_USER
-			usb_send_dword(*(uint32_t*)(OB + 4)); // OB_DATA0 & OB_DATA1
-			usb_send_dword(*(uint32_t*)(OB + 8));   // OB_WP0 & OB_WP1
+			usb_send_dword(*(uint32_t*)(OB + 0));   // OB_SPC && OB_USER
+			usb_send_dword(*(uint32_t*)(OB + 4)); // OB_DATA0 && OB_DATA1
+			usb_send_dword(*(uint32_t*)(OB + 8));   // OB_WP0 && OB_WP1
 			break;
 		}
 

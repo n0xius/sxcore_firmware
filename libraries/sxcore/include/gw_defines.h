@@ -144,7 +144,7 @@ typedef enum USB_DIAG_CMD_e
 //#define USB_CMD_ ((uint32_t)0xFACE003C) // TODO: figure out (authentication required)
 //#define USB_CMD_ ((uint32_t)0xFACE003D) // TODO: figure out (authentication required)
 #define USB_CMD_GET_BOARD_ID ((uint32_t)0xFACE003E) // get board type by pin (authentication required)
-//#define USB_CMD_ ((uint32_t)0xFACE003F) // spi1 setup, send 0x57, recv 0x8F, recv 0xE8 (authentication required)
+#define USB_CMD_GET_DATA_FROM_LIS3DH ((uint32_t)0xFACE003F) // spi1 setup, send 0x57, recv 0x8F, recv 0xE8 (authentication required)
 #define USB_CMD_RESET_FPGA_GLITCH_CFG ((uint32_t)0xFACE0040) // reset fpga glitch config (authentication required)
 //#define USB_CMD_ ((uint32_t)0xFACE0041) // TODO: figure out (authentication required)
 

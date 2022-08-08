@@ -16,19 +16,17 @@ uint8_t fpga_is_cdone_set(void)
 	return gpio_input_bit_get(GPIOA, GPIO_PIN_1) != RESET;
 }
 
-// since this is configured as pull up, this will set the pin to high
 void fpga_spi0_reset_nss(void)
 {
 	gpio_bit_reset(GPIOA, GPIO_PIN_4);
 }
 
-// since this is configured as pull up, this will set the pin to high
 void fpga_spi0_reset_creset(void)
 {
 	gpio_bit_reset(GPIOB, GPIO_PIN_10);
 }
 
-void fpga_spi1_reset_creset(void)
+void spi1_set_cs_low(void)
 {
 	gpio_bit_reset(GPIOB, GPIO_PIN_12);
 }
@@ -40,14 +38,12 @@ void fpga_spi0_wait_and_set_nss(void)
 	gpio_bit_set(GPIOA, GPIO_PIN_4);
 }
 
-// since this is configured as pull up, this will set the pin to low
 void fpga_spi0_set_creset(void)
 {
 	gpio_bit_set(GPIOB, GPIO_PIN_10);
 }
 
-// since this is configured as pull up, this will set the pin to low
-void fpga_spi1_set_nss(void)
+void spi1_set_cs_high(void)
 {
 	gpio_bit_set(GPIOB, GPIO_PIN_12);
 }
@@ -74,15 +70,19 @@ void initialize_spi1()
 {
 	rcu_periph_clock_enable(RCU_SPI1);
 
+	// LISC3H Pin 8 CS, SPI Idle/Communication
 	gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_PIN_12);
 	gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12);
 
+	// LISC3H Pin 4 SCL, SPI CLK
 	gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_13);
 	gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_13);
 
+	// LISC3H Pin 7 SDO, SPI SDO
 	gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_14);
 	gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_14);
 
+	// LISC3H Pin 6 SDI, SPI SDI
 	gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_15);
 	gpio_af_set(GPIOB, GPIO_AF_0, GPIO_PIN_15);
 
@@ -102,7 +102,7 @@ void initialize_spi1()
 	spi_i2s_interrupt_enable(SPI1, SPI_I2S_INT_RBNE);
 	spi_enable(SPI1);
 
-	fpga_spi1_set_nss();
+	spi1_set_cs_high();
 }
 
 void spi0_transmit_data(uint8_t *_data, uint32_t _data_len)
@@ -137,7 +137,7 @@ void spi0_send_data(uint8_t *_data, uint32_t _data_len)
 
 void spi1_recv_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 {
-	fpga_spi1_reset_creset();
+	spi1_set_cs_low();
 
 	spi_i2s_data_transmit(SPI1, (uint32_t)_cmd);
 
@@ -157,12 +157,12 @@ void spi1_recv_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 	// wait until spi transaction is done.
 	while ( ((SPI_STAT(SPI1) & 0xFF) & (SPI_STAT_TRANS | SPI_STAT_TBE | SPI_STAT_RBNE)) != SPI_STAT_TBE );
 
-	fpga_spi1_set_nss();
+	spi1_set_cs_high();
 }
 
 void spi1_send_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 {
-	fpga_spi1_reset_creset();
+	spi1_set_cs_low();
 
 	spi_i2s_data_transmit(SPI1, (uint32_t)_cmd);
 
@@ -180,7 +180,7 @@ void spi1_send_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 	// wait until spi transaction is done.
 	while ( ((SPI_STAT(SPI1) & 0xFF) & (SPI_STAT_TRANS | SPI_STAT_TBE | SPI_STAT_RBNE)) != SPI_STAT_TBE );
 
-	fpga_spi1_set_nss();
+	spi1_set_cs_high();
 }
 
 uint8_t spi0_transfer_one_byte(uint8_t _data)
@@ -204,6 +204,7 @@ void spi0_send_clk(uint32_t _size)
 		spi0_send_one_byte(0);
 }
 
+// https://github.com/YosysHQ/icestorm/blob/master/iceprog/iceprog.c#L232
 int spi0_read_status()
 {
 	spi0_send_clk(8);
@@ -212,6 +213,7 @@ int spi0_read_status()
 	{
 		fpga_spi0_reset_nss();
 
+		// fpga read status register
 		uint8_t send_buffer[2] = { 5, 0 };
 		spi0_transmit_data(send_buffer, 2);
 
@@ -317,11 +319,12 @@ void spi0_send_data_BC(uint8_t* _data, uint32_t _data_len)
 	fpga_spi0_wait_and_set_nss();
 }
 
+// fpga reset write enable latch (WRDI)
 void spi0_send_4(void)
 {
 	fpga_spi0_reset_nss();
 
-	spi0_send_one_byte(4);
+	spi0_send_one_byte(4); // fpga reset write enable latch (WRDI)
 
 	fpga_spi0_wait_and_set_nss();
 
@@ -334,11 +337,12 @@ void spi0_send_05_via_24(uint8_t _data)
 	spi0_send_data_24(0x105, _data);
 }
 
+// fpga set write enable latch (WREN) and read status
 uint32_t spi0_get_fpga_cmd(void)
 {
 	fpga_spi0_reset_nss();
 
-	spi0_send_one_byte(6);
+	spi0_send_one_byte(6); // fpga set write enable latch (WREN)
 
 	fpga_spi0_wait_and_set_nss();
 
@@ -375,16 +379,17 @@ void spi0_send_05_send_BC(uint8_t _buffer_index, uint8_t* _data, uint32_t _data_
 	spi0_send_data_BC(_data, _data_len);
 }
 
-void spi0_send_03_read_8_bytes(uint32_t _arg, uint8_t *_data)
+// fpga read memory array
+void spi0_send_03_read_8_bytes(uint32_t _address, uint8_t *_data)
 {
 	fpga_spi0_reset_nss();
 
 	uint8_t buffer[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	buffer[0] = 3;
-	buffer[1] = (uint8_t)(_arg >> 16);
-	buffer[2] = (uint8_t)(_arg >> 8);
-	buffer[3] = (uint8_t)(_arg);
+	buffer[0] = 3; // fpga read data
+	buffer[1] = (uint8_t)(_address >> 16);
+	buffer[2] = (uint8_t)(_address >> 8);
+	buffer[3] = (uint8_t)(_address);
 
 	spi0_send_data(buffer, sizeof(buffer));
 
@@ -395,6 +400,7 @@ void spi0_send_03_read_8_bytes(uint32_t _arg, uint8_t *_data)
 	spi0_send_clk(8);
 }
 
+// fpga bank write
 uint32_t spi0_send_82_and_quad_word(uint8_t *_data)
 {
 	fpga_spi0_reset_nss();
@@ -410,6 +416,7 @@ uint32_t spi0_send_82_and_quad_word(uint8_t *_data)
 	return spi0_read_status();
 }
 
+// fpga bank select
 uint32_t spi0_transfer_83(uint8_t _data)
 {
 	fpga_spi0_reset_nss();
@@ -422,6 +429,7 @@ uint32_t spi0_transfer_83(uint8_t _data)
 	return spi0_read_status();
 }
 
+// fpga nvcm enable 
 void spi0_send_0_C4_via_82()
 {
 	uint8_t buffer[8] = { 0, 0, 0, 0, 0xC4, 0, 0, 0 };
@@ -429,6 +437,7 @@ void spi0_send_0_C4_via_82()
 	spi0_send_82_and_quad_word(buffer);    // 0 0 0 0 c4 0 0 0
 }
 
+// fpga trim write
 uint32_t spi0_write_11_bytes_via_02(uint8_t *_data)
 {
 	fpga_spi0_reset_nss();
@@ -443,18 +452,21 @@ uint32_t spi0_write_11_bytes_via_02(uint8_t *_data)
 	return spi0_read_status();
 }
 
+// fpga trim program
 uint32_t spi0_send_11_bytes_0_15_f2_f1_c4(uint8_t _data)
 {
 	uint8_t buffer[11] = { 0, 0, _data, 0, 0x15, 0xF2, 0xF1, 0xC4, 0, 0, 0 };
 	return spi0_write_11_bytes_via_02(buffer);
 }
 
+// fpga trim secure
 uint32_t spi0_send_11_bytes_30_0_0_1_0(uint8_t _data)
 {
 	uint8_t buffer[11] = { 0, 0, _data, 0x30, 0, 0, 1, 0, 0, 0, 0 };
 	return spi0_write_11_bytes_via_02(buffer);
 }
 
+// fpga trim enable
 uint32_t spi0_send_8_bytes_via_82(void)
 {
 	uint8_t buffer[8] = { 0, 0x15, 0xF2, 0xF0, 0xC2, 0, 0, 0, };
@@ -504,9 +516,10 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 
 	initialize_spi0(SPI_PSC_8);
 
-	// some synchronization word for the fpga
+	// fpga nvcm enable sequence
 	uint8_t v5[8] = { 0x7E, 0xAA, 0x99, 0x7E, 0x01, 0x0E, 0, 0 };
 
+	// fpga nvcm enable access
 	spi0_send_data(v5, 6);
 
 	fpga_spi0_wait_and_set_nss();
@@ -519,8 +532,7 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 	if ( status != GW_STATUS_SUCCESS )
 		return status;
 
-	// read the 8 bytes at 0x4000 (32 x 512)?
-	spi0_transfer_83(32);
+	spi0_transfer_83(0x20);
 
 	spi0_send_03_read_8_bytes(0, v5);
 
