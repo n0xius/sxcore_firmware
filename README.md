@@ -1,6 +1,6 @@
 DESCRIPTION:
 
-this is a wip reverse engineer'd implementation of the sx modchip firmware.
+this is a wip reverse engineer'd implementation of the sx modchip firmware.  
 you have to either extract the bct's and payloads from the sx firmware or provide your own ones.
 
 
