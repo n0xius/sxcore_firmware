@@ -244,7 +244,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			break;
 		}
 
-		case 0xFACE0036:
+		case 0xFACE0036: // fpga write and compare nvcm data
 		{
 			if (_is_authenticated == AUTH_NO_KEY)
 			{
