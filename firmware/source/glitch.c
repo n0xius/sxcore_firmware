@@ -18,7 +18,7 @@ const uint16_t mariko_glitch_offsets[13] = {
 	820, 825, 830, 835, 840, 845, 850, 855, 860, 865, 870, 875, 880u
 };
 
-static uint32_t g_random_seed = 0x75BCD15;
+static uint32_t g_random_seed = 123456789;
 
 uint32_t get_random_number()
 {
@@ -46,14 +46,13 @@ void setup_adc_for_gpio_pin(uint32_t _gpio, uint32_t _gpio_pin, uint8_t _adc_cha
 	adc_calibration_enable();
 }
 
-uint32_t adc_channel_read(void)
+uint16_t adc_channel_read(void)
 {
-	//adc_special_function_config(ADC_CONTINUOUS_MODE, ENABLE);
 	adc_enable();
 
 	while ( adc_flag_get(ADC_FLAG_EOC) == RESET );
 
-	return (uint32_t)adc_regular_data_read();
+	return adc_regular_data_read();
 }
 
 uint32_t get_pin_by_board_type(void)
@@ -72,7 +71,7 @@ uint32_t get_pin_by_board_type(void)
 
 uint32_t get_device_type(void)
 {
-	spi0_send_fpga_cmd(0x80u);
+	spi0_send_fpga_cmd(0x80);
 	delay_ms(1);
 	spi0_send_fpga_cmd(0);
 	delay_ms(1);
@@ -82,11 +81,11 @@ uint32_t get_device_type(void)
 	if ( pinId == GPIO_PIN_0 )
 	{
 		setup_adc_for_gpio_pin(GPIOB, GPIO_PIN_0, ADC_CHANNEL_8);
-		uint32_t erista_adc = adc_channel_read();
+		uint16_t erista_adc = adc_channel_read();
 		gpio_mode_set(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_0);
 
 		setup_adc_for_gpio_pin(GPIOB, GPIO_PIN_1, ADC_CHANNEL_9);
-		uint32_t mariko_adc = adc_channel_read();
+		uint16_t mariko_adc = adc_channel_read();
 		gpio_mode_set(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_1);
 
 		if ( mariko_adc > 255 )
@@ -98,7 +97,7 @@ uint32_t get_device_type(void)
 	if ( pinId == GPIO_PIN_1 ) // sx lite
 	{
 		setup_adc_for_gpio_pin(GPIOA, GPIO_PIN_2, ADC_CHANNEL_2);
-		uint32_t lite_adc = adc_channel_read();
+		uint16_t lite_adc = adc_channel_read();
 		// NOTE: shouldn't be PA2 be reset as well when both above get reset after adc usage?
 		//gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_2);
 
@@ -153,7 +152,7 @@ uint32_t reset_fpga_and_read_adc_value(const diagnostic_print_s *_diag_print, ui
 	delay_ms(1);
 	spi0_send_fpga_cmd(0);
 
-	uint32_t adc_value = adc_channel_read();
+	uint16_t adc_value = adc_channel_read();
 	diagnosis_hexdump_adc(_diag_print, adc_value | 0x30000000);
 
 	for ( int i = 0; ; ++i )
@@ -271,7 +270,7 @@ uint32_t spi_parser_parse(spi_parser_s *_spi_parser)
 		if ( _spi_parser->buffer_length <= 16 )
 			return 3;
 
-		if ( _spi_parser->cmd == 2 || _spi_parser->cmd == 9 )
+		if ( _spi_parser->cmd == MMC_ALL_SEND_CID || _spi_parser->cmd == MMC_SEND_CSD )
 		{
 			_spi_parser->orig_buffer = buffer;
 			_spi_parser->datatype = 2;
@@ -427,6 +426,9 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 		{
 			uint32_t should_rewrite_payload = was_invalid_config;
 
+			if (return_status)
+				break;
+
 			uint32_t v17 = ++v55;
 
 			if ( was_config_loaded == 3 )
@@ -434,7 +436,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 				if ( v17 > 49 )
 				{
 					return_status = GW_STATUS_GLITCH_TIMEOUT; // 0xBAD00124
-					break;
+					continue;
 				}
 			}
 			else if ( was_config_loaded == 2 )
@@ -442,7 +444,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 				if ( v17 >= 1200 )
 				{
 					return_status = GW_STATUS_GLITCH_TIMEOUT; // 0xBAD00124
-					break;
+					continue;
 				}
 
 				if ( v17 >= 400 )
@@ -556,10 +558,12 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 				}
 			}
 
-			uint8_t v30 = 0;
+			uint8_t v30;
 
-			if ( spi_status & 2 )
+			if ( (spi_status & 2) )
 				v30 = did_toggle_chip();
+			else
+				v30 = 0;
 
 			diagnosis_hexdump_fpga(_diag_print, &fpga_config, spi_status, spi_data_len, spi_data, v43, v30);
 			spi_cmds[spi_cmd_offset] = spi_data_type;
@@ -572,20 +576,21 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 			
 			for ( int j = 0; j != 8; ++j )
 			{
+				if ( !spi_cmds[j] )
+					continue;
+
+				++total_spi_commands;
 				switch ( spi_cmds[j] )
 				{
 					case 1:
-						++total_spi_commands;
 						++total_type_1_spi_cmd;
 						break;
 
 					case 2:
-						++total_spi_commands;
 						++total_type_2_spi_cmd;
 						break;
 
 					case 3:
-						++total_spi_commands;
 						++total_type_3_spi_cmd;
 						break;
 				}
@@ -597,13 +602,13 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 				{
 					memset(spi_cmds, 0, sizeof(spi_cmds));
 					return_status = GW_STATUS_GLITCH_FAILED; // 0xBAD00108
-					break;
+					continue;
 				}
 				else
 				{
 					if ( max_width_changes <= total_type_1_spi_cmd )
 					{
-						--fpga_config.width;
+						fpga_config.width -= 1;
 						memset(spi_cmds, 0, sizeof(spi_cmds));
 
 						if ( (spi_status & 2) && v30 )
@@ -612,7 +617,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
 					if ( total_type_2_spi_cmd > 4 )
 					{
-						++fpga_config.width;
+						fpga_config.width += 1;
 						memset(spi_cmds, 0, sizeof(spi_cmds));
 						
 						if ( (spi_status & 2) && v30 )
@@ -623,7 +628,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 			else if ( total_type_3_spi_cmd == 8 )
 			{
 				return_status = GW_STATUS_GLITCH_FAILED; // 0xBAD00108
-				break;
+				continue;
 			}
 
 			if ( was_successful_glitch )
@@ -631,7 +636,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 				if ( was_config_loaded == 3 )
 				{
 					return_status = GW_STATUS_GLITCH_SUCCESS; // 0x900D0006
-					break;
+					continue;
 				}
 
 				if ( was_config_loaded == 2 )
@@ -643,7 +648,7 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 					}
 
 					return_status = GW_STATUS_GLITCH_SUCCESS; // 0x900D0006
-					break;
+					continue;
 				}
 			}
 		}

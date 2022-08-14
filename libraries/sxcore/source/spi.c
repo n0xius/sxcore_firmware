@@ -205,7 +205,7 @@ void spi0_send_clk(uint32_t _size)
 }
 
 // https://github.com/YosysHQ/icestorm/blob/master/iceprog/iceprog.c#L232
-int spi0_read_status()
+uint32_t spi0_read_status()
 {
 	spi0_send_clk(8);
 
@@ -379,14 +379,14 @@ void spi0_send_05_send_BC(uint8_t _buffer_index, uint8_t* _data, uint32_t _data_
 	spi0_send_data_BC(_data, _data_len);
 }
 
-// fpga read memory array
-void spi0_send_03_read_8_bytes(uint32_t _address, uint8_t *_data)
+// source for the iCE40 fpga information: https://github.com/osresearch/icestorm/blob/nvcmtool/icenvcm/icenvcm.py
+void fpga_nvcm_read(uint32_t _address, uint8_t *_data)
 {
 	fpga_spi0_reset_nss();
 
 	uint8_t buffer[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	buffer[0] = 3; // fpga read data
+	buffer[0] = 0x03; // fpga read data
 	buffer[1] = (uint8_t)(_address >> 16);
 	buffer[2] = (uint8_t)(_address >> 8);
 	buffer[3] = (uint8_t)(_address);
@@ -417,7 +417,7 @@ uint32_t spi0_send_82_and_quad_word(uint8_t *_data)
 }
 
 // fpga bank select
-uint32_t spi0_transfer_83(uint8_t _data)
+uint32_t fpga_select_bank(uint8_t _data)
 {
 	fpga_spi0_reset_nss();
 
@@ -481,10 +481,11 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 
 	if ( (_prescale_select & 0xFFFFFFFD) != 0)
 	{
+		// fpga configure as spi periphal
 		if ( _prescale_select == 1 )
 			fpga_spi0_wait_and_set_nss();
 	}
-	else
+	else // fpga configure from NVCM
 		fpga_spi0_reset_nss();
 
 	delay_us(300);
@@ -497,8 +498,9 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 		{
 			delay_ms(50);
 
+			// if CDONE == 0 in SPI periphal mode, the fpga failed to start correctly
 			if ( !fpga_is_cdone_set() )
-				return 0xBAD00004;
+				return GW_STATUS_FPGA_STARTUP_FAILED; // 0xBAD00004
 		}
 
 		return GW_STATUS_SUCCESS; // 0x900D0000
@@ -507,7 +509,7 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 	delay_us(10);
 
 	if ( fpga_is_cdone_set() )
-		return 0xBAD00004;
+		return GW_STATUS_FPGA_STARTUP_FAILED; // 0xBAD00004
 
 	delay_ms(1);
 
@@ -516,11 +518,11 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 
 	initialize_spi0(SPI_PSC_8);
 
-	// fpga nvcm enable sequence
-	uint8_t v5[8] = { 0x7E, 0xAA, 0x99, 0x7E, 0x01, 0x0E, 0, 0 };
+	// fpga "nvcm enable access" sequence
+	uint8_t buffer[8] = { 0x7E, 0xAA, 0x99, 0x7E, 0x01, 0x0E, 0, 0 };
 
-	// fpga nvcm enable access
-	spi0_send_data(v5, 6);
+	// send "nvcm enable access" sequence to fpga
+	spi0_send_data(buffer, 6);
 
 	fpga_spi0_wait_and_set_nss();
 
@@ -531,17 +533,19 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 	// check if fpga is able to communitcate?
 	if ( status != GW_STATUS_SUCCESS )
 		return status;
+	
+	// select "silicon signature" bank
+	fpga_select_bank(0x20); 
 
-	spi0_transfer_83(0x20);
+	fpga_nvcm_read(0, buffer); // read silicon signature
 
-	spi0_send_03_read_8_bytes(0, v5);
-
-	if ( v5[0] != 8 )
-		return 0xBAD0000E;
-
-	spi0_transfer_83(0);
+	if ( buffer[0] != 8 )
+		return GW_STATUS_FPGA_SILICON_SIG_MISMATCH; // 0xBAD0000E
+	
+	// re-select "nvcm" bank
+	fpga_select_bank(0); 
 	spi0_send_0_C4_via_82();
-	spi0_send_03_read_8_bytes(0, v5);
+	fpga_nvcm_read(0, buffer);
 
 	return GW_STATUS_SUCCESS;
 }

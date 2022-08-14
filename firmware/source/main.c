@@ -256,10 +256,10 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 			// sub_8005E24(data)
 			{
-				uint32_t tea_key_1 = (data[0] << 16) | (data[1] << 8) | data[2];
+				uint32_t fpga_address = (data[0] << 16) | (data[1] << 8) | data[2];
 
 				uint32_t tea_key[4] = {
-						tea_key_1,
+						fpga_address,
 						0x95E33D7A,
 						0xDB8EDA54,
 						0x3E21803B
@@ -269,19 +269,20 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 				tea_decrypt(tea_key, (uint32_t*)deciphered_data);
 
-				if ( tea_key_1 == 0xFFFFFF )
+				if ( fpga_address == 0xFFFFFF )
 				{
 					spi0_send_4();
-					//sub_8005BB8();
+
+					// fpga bank select: nvcm (0x00)
 					{
-						spi0_transfer_83(0);
+						fpga_select_bank(0);
 					}
 
 					spi0_send_8_bytes_via_82();
 
-					//sub_8005BB2();
+					// fpga bank select: trim (0x10)
 					{
-						spi0_transfer_83(16);
+						fpga_select_bank(0x10);
 					}
 
 					spi0_get_fpga_cmd();
@@ -296,13 +297,13 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				}
 				else
 				{
-					if ( !tea_key_1 )
+					if ( !fpga_address )
 					{
 						spi0_send_8_bytes_via_82();
 
-						//sub_8005BB8();
+						// fpga bank select: nvcm (0x00)
 						{
-							spi0_transfer_83(0);
+							fpga_select_bank(0);
 						}
 
 						spi0_get_fpga_cmd();
@@ -316,7 +317,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 						uint8_t data_from_03[8];
 
 						spi0_send_0_C4_via_82();
-						spi0_send_03_read_8_bytes(tea_key_1, data_from_03);
+						fpga_nvcm_read(fpga_address, data_from_03);
 
 						spi0_send_8_bytes_via_82();
 
@@ -329,7 +330,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			break;
 		}
 
-		case 0xFACE003B:
+		case 0xFACE003B: // fpga read and compare nvcm data
 		{
 			if (_is_authenticated == AUTH_NO_KEY)
 			{
@@ -340,10 +341,10 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			uint8_t* data = _usb->recv_buffer + 4;
 
 			{
-				uint32_t tea_key_1 = (data[0] << 16) | (data[1] << 8) | data[2];
+				uint32_t fpga_address = (data[0] << 16) | (data[1] << 8) | data[2];
 
 				uint32_t tea_key[4] = {
-						tea_key_1,
+						fpga_address,
 						0x95E33D7A,
 						0xDB8EDA54,
 						0x3E21803B
@@ -353,34 +354,34 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 				tea_decrypt(tea_key, (uint32_t*)deciphered_data);
 
-				if ( tea_key_1 == 0xFFFFFF )
+				if ( fpga_address == 0xFFFFFF )
 				{
 					status = GW_STATUS_SUCCESS;
 					break;
 				}
 
-				if ( !tea_key_1 )
+				if ( !fpga_address )
 				{
 					spi0_send_0_C4_via_82();
 
-					//sub_8005BB8();
+					// fpga bank select: nvcm (0x00)
 					{
-						spi0_transfer_83(0);
+						fpga_select_bank(0);
 					}
 				}
 
 				uint8_t data_from_03[8];
-				spi0_send_03_read_8_bytes(tea_key_1, data_from_03);
+				fpga_nvcm_read(fpga_address, data_from_03);
 
 				if ( memcmp(data_from_03, deciphered_data + 3, 8) != 0 )
-					status = 0xBAD00013;
+					status = GW_STATUS_FPGA_NVCM_READ_MISMATCH; // 0xBAD00013
 			}
 
 			status = GW_STATUS_SUCCESS;
 			break;
 		}
 
-		case 0xFACE003C:
+		case 0xFACE003C: // fpga secure and verify trim
 		{
 			if (_is_authenticated == AUTH_NO_KEY)
 			{
@@ -390,16 +391,16 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 			// sub_8005F40
 			{
-				//sub_8005BB8();
+				// fpga bank select: nvcm (0x00)
 				{
-					spi0_transfer_83(0x00);
+					fpga_select_bank(0);
 				}
 
 				spi0_send_8_bytes_via_82();
 
-				//sub_8005BB2();
+				// fpga bank select: trim (0x10)
 				{
-					spi0_transfer_83(0x10);
+					fpga_select_bank(0x10);
 				}
 
 				spi0_get_fpga_cmd();
@@ -417,16 +418,17 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				{
 					spi0_send_0_C4_via_82();
 
-					//sub_8005BB2();
+					// fpga bank select: trim (0x10)
 					{
-						spi0_transfer_83(0x10);
+						fpga_select_bank(0x10);
 					}
 
-					spi0_send_03_read_8_bytes(0x20, data_from_03);
+					// get nvcm Trim_Parameter_OTP
+					fpga_nvcm_read(0x20, data_from_03);
 					status = GW_STATUS_SUCCESS;
 				}
 
-				status = (data_from_03[0] & 0x30) != 0x30 ? 0xBAD00012 : GW_STATUS_SUCCESS;
+				status = (data_from_03[0] & 0x30) != 0x30 ? GW_STATUS_FPGA_TRIM_SECURE_FAILED : GW_STATUS_SUCCESS;
 			}
 
 			break;
@@ -520,18 +522,18 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			break;
 		}
 
-		case 0xFACE0041:
+		case 0xFACE0041: // fpga get Trim_Parameter_OTP
 		{
-			// sub_8005E08 (_usb->send_buffer)
+			// fpga_get_trim_parameter_otp
 			{
 				spi0_send_0_C4_via_82();
 
-				//sub_8005BB2();
+				// fpga bank select: trim (0x10)
 				{
-					spi0_transfer_83(0x10);
+					fpga_select_bank(0x10);
 				}
 
-				spi0_send_03_read_8_bytes(0x20, _usb->send_buffer);
+				fpga_nvcm_read(0x20, _usb->send_buffer);
 				status = GW_STATUS_SUCCESS;
 			}
 
@@ -722,7 +724,7 @@ int main(void)
 	hardware_initialize();
 
 	setup_adc_for_gpio_pin(GPIOA, GPIO_PIN_3, ADC_CHANNEL_3);
-	uint32_t adc_value = adc_channel_read();
+	uint16_t adc_value = adc_channel_read();
 
 	// NOTE: listen for usb vbus via PA09
 	gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_9);

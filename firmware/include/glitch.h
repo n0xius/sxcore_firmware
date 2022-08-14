@@ -4,7 +4,7 @@
 
 void setup_adc_for_gpio_pin(uint32_t _gpio, uint32_t _gpio_pin, uint8_t _adc_channel);
 
-uint32_t adc_channel_read(void);
+uint16_t adc_channel_read(void);
 
 uint32_t get_pin_by_board_type(void);
 

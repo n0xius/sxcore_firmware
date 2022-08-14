@@ -19,7 +19,7 @@ void spi1_send_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len);
 uint8_t spi0_transfer_one_byte(uint8_t _data);
 
 void spi0_send_clk(uint32_t _size);
-int spi0_read_status();
+uint32_t spi0_read_status();
 
 void spi0_send_data_24(uint32_t _cmd_and_size, uint32_t _data);
 uint32_t spi0_recv_data_26(uint32_t _cmd_and_size);
@@ -44,10 +44,10 @@ uint32_t spi0_recv_0B_via_26(void);
 void spi0_send_05_recv_BA(uint8_t _buffer_index, uint8_t* _data, uint32_t _data_len);
 void spi0_send_05_send_BC(uint8_t _buffer_index, uint8_t* _data, uint32_t _data_len);
 
-void spi0_send_03_read_8_bytes(uint32_t _arg, uint8_t *_data);
+void fpga_nvcm_read(uint32_t _arg, uint8_t *_data);
 
 uint32_t spi0_send_82_and_quad_word(uint8_t *_data);
-uint32_t spi0_transfer_83(uint8_t _data);
+uint32_t fpga_select_bank(uint8_t _data);
 void spi0_send_0_C4_via_82();
 
 uint32_t spi0_setup(uint32_t a1);
