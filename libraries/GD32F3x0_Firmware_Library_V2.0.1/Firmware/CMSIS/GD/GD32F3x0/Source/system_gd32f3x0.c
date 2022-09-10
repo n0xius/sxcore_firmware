@@ -61,9 +61,9 @@
 //#define __SYSTEM_CLOCK_84M_PLL_HXTAL         (uint32_t)(84000000)
 //#define __SYSTEM_CLOCK_84M_PLL_IRC8M_DIV2    (uint32_t)(84000000)
 //#define __SYSTEM_CLOCK_96M_PLL_HXTAL         (uint32_t)(96000000)
-//#define __SYSTEM_CLOCK_96M_PLL_IRC8M_DIV2      (uint32_t)(96000000)
+#define __SYSTEM_CLOCK_96M_PLL_IRC8M_DIV2      (uint32_t)(96000000)
 //#define __SYSTEM_CLOCK_96M_PLL_IRC48M_DIV2     (uint32_t)(96000000)
-#define __SYSTEM_CLOCK_108M_PLL_HXTAL        (uint32_t)(108000000)
+//#define __SYSTEM_CLOCK_108M_PLL_HXTAL        (uint32_t)(108000000)
 //#define __SYSTEM_CLOCK_108M_PLL_IRC8M_DIV2   (uint32_t)(108000000)
 #endif /* GD32F350 */
 
