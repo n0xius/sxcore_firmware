@@ -107,7 +107,7 @@ void usb_send_func(uint32_t _data_len)
 
 void usb_send_dword(uint32_t _data)
 {
-	*(uint32_t*)usb_send_buffer = _data;
+	REG32(usb_send_buffer) = _data;
 
 	usb_send_func(sizeof(uint32_t));
 }
@@ -121,7 +121,7 @@ uint32_t bootloader_handle_usb_command()
 	{
 		case USB_CMD_PING:                              // 0xFACE0000
 		{
-			status = GW_STATUS_SUCCESS; // 0x900D0000
+			status = GW_STATUS_SUCCESS; 				// 0x900D0000
 			break;
 		}
 
@@ -133,7 +133,7 @@ uint32_t bootloader_handle_usb_command()
 				break;
 			}
 
-			status = validate_firmware_header((uint8_t *)(usb_recv_buffer + 4), 1);
+			status = validate_firmware_header(usb_recv_buffer + 4, 1);
 			break;
 		}
 
@@ -193,8 +193,8 @@ uint32_t bootloader_handle_usb_command()
 
 		case USB_CMD_SET_LED_COLOR:                     // 0xFACE0008
 		{
-			uint32_t led_num = REG32(usb_recv_buffer[4]);
-			uint32_t led_clr = REG32(usb_recv_buffer[8]);
+			uint32_t led_num = REG32(usb_recv_buffer + 4);
+			uint32_t led_clr = REG32(usb_recv_buffer + 8);
 
 			switch(led_num)
 			{
@@ -217,9 +217,9 @@ uint32_t bootloader_handle_usb_command()
 
 		case USB_CMD_AUTHENTICATE:                      // 0xFACE000F
 		{
-			if (!memcmp((uint8_t *)(usb_recv_buffer + 4), auth_master_key, 12))
+			if (!memcmp(usb_recv_buffer + 4, auth_master_key, 12))
 				is_authenticated = AUTH_MASTER_KEY;
-			else if (!memcmp((uint8_t *)(usb_recv_buffer + 4), auth_program_key, 12))
+			else if (!memcmp(usb_recv_buffer + 4, auth_program_key, 12))
 				is_authenticated = AUTH_PROGRAM_KEY;
 			else
 				is_authenticated = AUTH_NO_KEY;
@@ -246,16 +246,16 @@ uint32_t bootloader_handle_usb_command()
 			}
 
 			// NOTE: one time programming of the serial number
-			if ( *(uint32_t*)(serial_number + 0) != 0xFFFFFFFF
-				 || *(uint32_t *)(serial_number + 4) != 0xFFFFFFFF
-				 || *(uint32_t *)(serial_number + 8) != 0xFFFFFFFF
-				 || *(uint32_t *)(serial_number + 12) != 0xFFFFFFFF )
+			if ( REG32(serial_number + 0) != 0xFFFFFFFF
+				 || REG32(serial_number + 4) != 0xFFFFFFFF
+				 || REG32(serial_number + 8) != 0xFFFFFFFF
+				 || REG32(serial_number + 12) != 0xFFFFFFFF )
 			{
 				status = GW_STATUS_FW_UPDATE_ERROR; // 0xBAD00009
 				break;
 			}
 
-			status = flash_reprogram((uint8_t *)serial_number, (uint8_t *)(usb_recv_buffer + 4), 16);
+			status = flash_reprogram((uint8_t*)serial_number, usb_recv_buffer + 4, 16);
 			break;
 		}
 
@@ -280,7 +280,7 @@ uint32_t bootloader_handle_usb_command()
 				break;
 			}
 
-			status = flash_reprogram((uint8_t *)bootloader_version, (uint8_t *)(usb_recv_buffer + 4), sizeof(uint32_t));
+			status = flash_reprogram((uint8_t *)bootloader_version, usb_recv_buffer + 4, sizeof(uint32_t));
 			break;
 		}
 
@@ -293,9 +293,9 @@ uint32_t bootloader_handle_usb_command()
 		case USB_CMD_GET_OB_PROTECTION:                 // 0x0D15EA5E
 		{
 			usb_send_dword(GW_STATUS_SEND_OB_DATA); // 0x900D0004
-			usb_send_dword(*(uint32_t*)(OB + 0));   // OB_SPC && OB_USER
-			usb_send_dword(*(uint32_t*)(OB + 4)); // OB_DATA0 && OB_DATA1
-			usb_send_dword(*(uint32_t*)(OB + 8));   // OB_WP0 && OB_WP1
+			usb_send_dword(REG32(OB + 0));   // OB_SPC && OB_USER
+			usb_send_dword(REG32(OB + 4)); // OB_DATA0 && OB_DATA1
+			usb_send_dword(REG32(OB + 8));   // OB_WP0 && OB_WP1
 			break;
 		}
 
@@ -307,20 +307,20 @@ uint32_t bootloader_handle_usb_command()
 				break;
 			}
 
-			uint16_t spc_value = (uint16_t)(REG32(usb_recv_buffer[4]) & 0xFFFF);
+			uint16_t spc_value = (uint16_t)(REG32(usb_recv_buffer + 4) & 0xFFFF);
 
 			status = ob_set_protection(spc_value);
 			break;
 		}
 
 		default:
-			return ((uint32_t)0xFFFFFFFF);
+			return 0xFFFFFFFFu;
 	}
 
 	if (status != 0)
 		usb_send_dword(status);
 
-	return 0;
+	return 0u;
 }
 
 int32_t initialize_ram_func_table_and_run_firmware_cmd(bootloader_usb_s *_bootloader_usb, uint32_t _usb_cmd_size, uint8_t _is_authenticated)
@@ -345,7 +345,7 @@ int32_t initialize_ram_func_table_and_run_firmware_cmd(bootloader_usb_s *_bootlo
 
 void handle_usb_transfers()
 {
-	bootloader_usb_s bootloader_usb;
+	bootloader_usb_s bootloader_usb = {};
 
 	bootloader_usb.recv_buffer = usb_recv_buffer;
 	bootloader_usb.send_buffer = usb_send_buffer;

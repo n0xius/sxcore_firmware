@@ -65,7 +65,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 		case USB_CMD_PING:
 		{
 			status = GW_STATUS_SUCCESS;
-			*(uint32_t*)(_usb->send_buffer) = status;
+			REG32(_usb->send_buffer) = status;
 			break;
 		}
 
@@ -73,7 +73,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 		{
 			status = spi0_init_with_psc_4();
 
-			*(uint32_t*)(_usb->send_buffer) = status;
+			REG32(_usb->send_buffer) = status;
 			break;
 		}
 
@@ -89,7 +89,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			delay_ms(100);
 			spi0_send_fpga_cmd(0);
 
-			if ( REG32((uint32_t)(_usb->recv_buffer + 4)) == 0xAABBCCDD )
+			if ( REG32(_usb->recv_buffer + 4) == 0xAABBCCDD )
 			{
 				delay_ms(100);
 				spi0_send_fpga_cmd(0x40);
@@ -111,7 +111,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t fpga_cmd = REG32((uint32_t)(_usb->recv_buffer + 4));
+			uint32_t fpga_cmd = REG32(_usb->recv_buffer + 4);
 
 			spi0_send_fpga_cmd(fpga_cmd);
 
@@ -127,8 +127,8 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t mmc_cmd = REG32((uint32_t)(_usb->recv_buffer + 4));
-			uint32_t mmc_arg = REG32((uint32_t)(_usb->recv_buffer + 8));
+			uint32_t mmc_cmd = REG32(_usb->recv_buffer + 4);
+			uint32_t mmc_arg = REG32(_usb->recv_buffer + 8);
 			mmc_send_command(mmc_cmd, mmc_arg, _usb->send_buffer, 0);
 			break;
 		}
@@ -141,9 +141,9 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t block_index = REG32((uint32_t)(_usb->recv_buffer + 4)) & 15;
+			uint32_t block_index = REG32(_usb->recv_buffer + 4) & 15;
 
-			memcpy((uint8_t*)(g_block_buffer + block_index * 32), (uint8_t*)(_usb->recv_buffer + 8), 32);
+			memcpy((uint8_t*)(g_block_buffer + block_index * 32), (_usb->recv_buffer + 8), 32);
 
 			if ( block_index == 15 )
 				spi0_send_05_send_BC(1, g_block_buffer, 512);
@@ -160,12 +160,12 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t block_index = REG32((uint32_t)(_usb->recv_buffer + 4)) & 15;
+			uint32_t block_index = REG32(_usb->recv_buffer + 4) & 15;
 
 			if ( block_index == 0 )
 				spi0_send_05_send_BC(1, g_block_buffer, 512);
 
-			memcpy((uint8_t*)(_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + block_index * 32), 32);
+			memcpy((_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + block_index * 32), 32);
 			break;
 		}
 
@@ -177,12 +177,12 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t block_index = REG32((uint32_t)(_usb->recv_buffer + 4)) & 15;
+			uint32_t block_index = REG32(_usb->recv_buffer + 4) & 15;
 
 			if ( block_index == 0 )
 				spi0_recv_data_BA(g_block_buffer, 512);
 
-			memcpy((uint8_t*)(_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + (block_index * 32)), 32);
+			memcpy((_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + (block_index * 32)), 32);
 			break;
 		}
 
@@ -194,7 +194,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t fpga_data_type = REG32((uint32_t)(_usb->recv_buffer + 4));
+			uint32_t fpga_data_type = REG32(_usb->recv_buffer + 4);
 			spi0_send_05_via_24(fpga_data_type);
 
 			status = GW_STATUS_SUCCESS;
@@ -221,8 +221,8 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t cmd_and_size = REG32((uint32_t)(_usb->recv_buffer + 4));
-			uint32_t data = REG32((uint32_t)(_usb->recv_buffer + 8));
+			uint32_t cmd_and_size = REG32(_usb->recv_buffer + 4);
+			uint32_t data = REG32(_usb->recv_buffer + 8);
 
 			spi0_send_data_24(cmd_and_size, data);
 
@@ -238,7 +238,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t cmd_and_size = REG32((uint32_t)(_usb->recv_buffer + 4));
+			uint32_t cmd_and_size = REG32(_usb->recv_buffer + 4);
 			
 			status = spi0_recv_data_26(cmd_and_size);
 			break;
@@ -442,7 +442,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				break;
 			}
 
-			uint32_t spi_psc = REG32((uint32_t)(_usb->recv_buffer + 4));
+			uint32_t spi_psc = REG32(_usb->recv_buffer + 4);
 
 			status = spi_psc ? spi0_setup(spi_psc) : GW_STATUS_RESET;
 			break;
@@ -486,17 +486,17 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 				data_from_E8[2] = buffer[2]; // read z axis
 			}
 
-			*(uint32_t*)(_usb->send_buffer + 0) = data_from_8F;
-			*(uint32_t*)(_usb->send_buffer + 4) = data_from_E8[0];
-			*(uint32_t*)(_usb->send_buffer + 8) = data_from_E8[1];
-			*(uint32_t*)(_usb->send_buffer + 12) = data_from_E8[2];
+			REG32(_usb->send_buffer + 0) = data_from_8F;
+			REG32(_usb->send_buffer + 4) = data_from_E8[0];
+			REG32(_usb->send_buffer + 8) = data_from_E8[1];
+			REG32(_usb->send_buffer + 12) = data_from_E8[2];
 
 			break;
 		}
 
 		case USB_CMD_RESET_FPGA_GLITCH_CFG:
 		{
-			uint32_t fpga_width = REG32((uint32_t)(_usb->recv_buffer + 4));
+			uint32_t fpga_width = REG32(_usb->recv_buffer + 4);
 
 			// fpga_reset_glitch_settings(fpga_width);
 			{
@@ -625,7 +625,7 @@ uint8_t execute_spi_command(void)
 		{
 			uint32_t status = flash_erase((uint32_t)__config);
 
-			*(uint32_t*)(spi_buffer) = status;
+			REG32(spi_buffer) = status;
 			should_send_response = 1;
 			break;
 		}
@@ -639,7 +639,7 @@ uint8_t execute_spi_command(void)
 			config_set_chip_enabled(&config, spi_buffer[1]);
 			status = config_write_to_flash(&config);
 
-			*(uint32_t*)(spi_buffer) = status;
+			REG32(spi_buffer) = status;
 			should_send_response = 1;
 			break;
 		}

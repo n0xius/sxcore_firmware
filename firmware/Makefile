@@ -81,6 +81,21 @@ else
 endif
 #---------------------------------------------------------------------------------
 
+# ignore unused functions inside the GD32F3x0 library
+CFILES := $(filter-out gd32f3x0_cec.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_cmp.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_crc.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_ctc.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_dac.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_dbg.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_dma.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_exti.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_fwdgt.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_i2c.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_rtc.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_tsi.c, $(CFILES))
+CFILES := $(filter-out gd32f3x0_wwdgt.c, $(CFILES))
+
 export OFILES_SOURCES 	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))

@@ -43,7 +43,7 @@ void initialize_timers()
 	timer_deinit(TIMER15);
 	timer_deinit(TIMER16);
 
-	timer_parameter_struct timer_parameter;
+	timer_parameter_struct timer_parameter = {};
 
 	//timer_parameter.prescaler = rcu_clock_freq_get(CK_SYS) / 1000000;
 	timer_parameter.prescaler = 107; // kHz - 1 / 1000000 or MHz - 1?
@@ -57,7 +57,7 @@ void initialize_timers()
 	timer_init(TIMER15, &timer_parameter);
 	timer_init(TIMER16, &timer_parameter);
 
-	timer_oc_parameter_struct timer_oc_param;
+	timer_oc_parameter_struct timer_oc_param = {};
 
 	timer_oc_param.outputstate = TIMER_CCX_ENABLE;
 	timer_oc_param.outputnstate = TIMER_CCXN_ENABLE;

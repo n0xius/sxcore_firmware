@@ -59,7 +59,7 @@ void handle_bootloader_spi_commands(void)
 
 				case MC_SET_LED_COLOR:
 				{
-					uint32_t color = REG32((uint32_t)__spi_buffer__ + 16);
+					uint32_t color = REG32(__spi_buffer__ + 16);
 					set_led_color(color);
 					status_code = GW_STATUS_SUCCESS;
 					break;
@@ -89,7 +89,7 @@ void handle_bootloader_spi_commands(void)
 					break;
 			}
 
-			*(uint32_t*)__spi_buffer__ = status_code;
+			REG32(__spi_buffer__) = status_code;
 			spi0_send_05_send_BC(1, __spi_buffer__, 512);
 			spi0_send_fpga_cmd(3);
 
