@@ -43,7 +43,7 @@ void timeout_update(timeout_s* _timeout)
 
 int timeout_did_reach_timeout_ms(timeout_s* _timeout, uint32_t _ms)
 {
-	return _timeout->total_time_passed >= ((uint64_t)96000) * _ms;
+	return _timeout->total_time_passed >= (96000ull * _ms);
 }
 
 void set_start_addr_to_firmware()

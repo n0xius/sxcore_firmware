@@ -34,12 +34,12 @@ void delay_init(/*uint8_t sysclk*/)
 
 void delay_ms(uint32_t nms)
 {
-	SysTick_delay(96000ull * (uint64_t)nms);
+	SysTick_delay(96000ull * nms);
 }
 
 void delay_us(uint32_t nus)
 {
-	SysTick_delay(96ull * (uint64_t)nus);
+	SysTick_delay(96ull * nus);
 }
 
 /* delay in micro seconds */
