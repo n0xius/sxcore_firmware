@@ -351,15 +351,15 @@ uint32_t run_glitch(const diagnostic_print_s *_diag_print, fpga_config_s *_fpga_
 
 	uint32_t return_status = setup_for_board_type(device, adc_thresholds);
 
-	uint8_t* g_serial_number = ((uint8_t*)__bootloader + 0x150);
-	uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
+	uint8_t* serial_number = (uint8_t*)BLDR_SERIAL;
+	uint32_t* bootloader_version = (uint32_t*)BLDR_VERSION;
 
 	diagnosis_begin(_diag_print);
 
-	diagnosis_hexdump_serial(_diag_print, g_serial_number);
+	diagnosis_hexdump_serial(_diag_print, serial_number);
 	diagnosis_hexdump_device_type(_diag_print, device);
 	diagnosis_hexdump_fw_version(_diag_print, *firmware_version);
-	diagnosis_hexdump_bldr_version(_diag_print, *g_bootloader_version);
+	diagnosis_hexdump_bldr_version(_diag_print, *bootloader_version);
 	
 	toggle_blue_led_glow(1);
 	if ( was_config_loaded == 2 )

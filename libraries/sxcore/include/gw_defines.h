@@ -203,6 +203,17 @@ typedef enum MMC_CMD_e
 #define NVIC_VECTTAB_RAM            ((uint32_t)0x20000000)
 #endif // NVIC_VECTTAB_RAM
 
+
+#define BLDR_USBFS_IRQ				((uint8_t*)__bootloader + 0x14C)
+#define BLDR_SERIAL					((uint8_t*)__bootloader + 0x150)
+#define BLDR_VERSION				((uint8_t*)__bootloader + 0x160)
+#define BLDR_SPI_HANDLER			((uint8_t*)__bootloader + 0x164)
+
+#define FW_FUNC_TBL					((uint8_t*)__firmware + 0x150)
+#define FW_VERSION					((uint8_t*)__firmware + 0x158)
+#define FW_IS_INITIALIZED			((uint8_t*)__firmware + 0x1FC)
+
+
 // ---------------------------------------------------------
 // Structs, enums and function templates
 // ---------------------------------------------------------

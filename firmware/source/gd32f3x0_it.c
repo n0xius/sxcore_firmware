@@ -127,23 +127,15 @@ void timer13_irq_handler(void)
 }
 
 /*!
-	\brief	  this function handles timer13 interrupts
+	\brief	  this function handles usbfs interrupts
 	\param[in]  none
 	\param[out] none
 	\retval	 none
 */
 void usbfs_irq_handler(void)
 {
-#ifndef USBFS_IRQ_INDEX
-#define USBFS_IRQ_INDEX 83
-#endif
-
 	// call usbfs irq of the bootloader
-	((irq_handler_t)__bootloader[USBFS_IRQ_INDEX])();
-
-#ifdef USBFS_IRQ_INDEX
-#undef USBFS_IRQ_INDEX
-#endif
+	((irq_handler_t)BLDR_USBFS_IRQ)(); 
 }
 
 int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size )

@@ -500,10 +500,10 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 			// fpga_reset_glitch_settings(fpga_width);
 			{
-				spi0_send_data_24(0x103, 120);       // timeout?
-				spi0_send_data_24(0x201, 1200);      // offset?
-				spi0_send_data_24(0x108, 0);          // subcycle delay?
-				spi0_send_data_24(0x102, fpga_width); // pulse width
+				spi0_send_data_24(0x103, 120);       	// timeout?
+				spi0_send_data_24(0x201, 1200);      	// offset?
+				spi0_send_data_24(0x108, 0);          	// subcycle delay?
+				spi0_send_data_24(0x102, fpga_width); 	// pulse width
 				spi0_send_data_24(0x109, 0);
 				spi0_send_data_24(0x106, 0);
 				spi0_send_data_24(0x106, 16);
@@ -575,16 +575,16 @@ uint8_t execute_spi_command(void)
 		{
 			memset(spi_buffer, 0x11, sizeof(spi_buffer));
 
-			uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
-			uint32_t* g_bootloader_version = (uint32_t*)((uint8_t*)__bootloader + 0x160);
+			uint8_t* serial_number = (uint8_t*)BLDR_SERIAL;
+			uint32_t* bootloader_version = (uint32_t*)BLDR_VERSION;
 
-			spi_buffer[0] = (uint8_t)((*g_bootloader_version) & 0xFF);
-			spi_buffer[1] = (uint8_t)((*g_bootloader_version >> 8) & 0xFF);
+			spi_buffer[0] = (uint8_t)((*bootloader_version) & 0xFF);
+			spi_buffer[1] = (uint8_t)((*bootloader_version >> 8) & 0xFF);
 
 			spi_buffer[2] = (uint8_t)((*firmware_version) & 0xFF);
 			spi_buffer[3] = (uint8_t)((*firmware_version >> 8) & 0xFF);
 
-			memcpy((uint8_t*)spi_buffer + 4, g_serial_number, 16);
+			memcpy((uint8_t*)spi_buffer + 4, serial_number, 16);
 
 			spi_buffer[24] = spi0_recv_data_26(0x10C);
 
@@ -601,7 +601,7 @@ uint8_t execute_spi_command(void)
 		case MC_SWITCH_TO_BLDR: // switch into bootloader spi cmd handler
 		{
 			// call handle_spi_cmds inside the bootloader
-			((irq_handler_t)((uint8_t*)__bootloader + 0x164))();
+			((irq_handler_t)BLDR_SPI_HANDLER)();
 			break;
 		}
 
@@ -694,8 +694,8 @@ void handle_firmware_spi_commands(void)
 
 void listen_for_spi_commands()
 {
-	uint8_t* g_serial_number = (uint8_t*)((uint8_t*)__bootloader + 0x150);
-	spi0_send_05_send_BC(6, (uint8_t*)g_serial_number, 16);
+	uint8_t* serial_number = (uint8_t*)BLDR_SERIAL;
+	spi0_send_05_send_BC(6, serial_number, 16);
 
 	spi0_send_07_via_24(1); // status set?
 	spi0_send_07_via_24(0); // status clear?

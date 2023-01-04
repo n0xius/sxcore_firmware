@@ -267,8 +267,8 @@ uint32_t bootloader_handle_usb_command()
 
 		case USB_CMD_GET_FW_VERSION:                    // 0xFACE0032
 		{
-			uint32_t* g_firmware_version = (uint32_t*)((uint32_t)&__firmware + 0x158);
-			usb_send_dword(*g_firmware_version);
+			uint32_t* firmware_version = (uint32_t*)FW_VERSION;
+			usb_send_dword(*firmware_version);
 			break;
 		}
 
@@ -325,15 +325,15 @@ uint32_t bootloader_handle_usb_command()
 
 int32_t initialize_ram_func_table_and_run_firmware_cmd(bootloader_usb_s *_bootloader_usb, uint32_t _usb_cmd_size, uint8_t _is_authenticated)
 {
-	uint32_t* g_did_initialize_functions = (uint32_t*)((uint32_t)&__firmware + 0x1FC);
+	uint32_t* did_initialize_functions = (uint32_t*)FW_IS_INITIALIZED;
 
-	if( (*debug_mode != BOOTLOADER_DEBUG_MODE && *g_did_initialize_functions) )
+	if( (*debug_mode != BOOTLOADER_DEBUG_MODE && *did_initialize_functions) )
 		return ((int32_t)-1);
 
 	if (!g_ram_function_table)
 	{
-		uint32_t* g_flash_function_table = (uint32_t*)((uint32_t)&__firmware + 0x150);
-		g_ram_function_table = g_flash_function_table;
+		uint32_t* flash_function_table = (uint32_t*)FW_FUNC_TBL;
+		g_ram_function_table = flash_function_table;
 
 		// call firmware_reset
 		((void_function_t)g_ram_function_table[0])();

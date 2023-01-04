@@ -324,6 +324,7 @@ void spi0_send_4(void)
 {
 	fpga_spi0_reset_nss();
 
+	// program disable
 	spi0_send_one_byte(4); // fpga reset write enable latch (WRDI)
 
 	fpga_spi0_wait_and_set_nss();
@@ -342,6 +343,7 @@ uint32_t spi0_get_fpga_cmd(void)
 {
 	fpga_spi0_reset_nss();
 
+	// program enable
 	spi0_send_one_byte(6); // fpga set write enable latch (WREN)
 
 	fpga_spi0_wait_and_set_nss();
@@ -400,7 +402,7 @@ void fpga_nvcm_read(uint32_t _address, uint8_t *_data)
 	spi0_send_clk(8);
 }
 
-// fpga bank write
+// fpga nvcm trim write
 uint32_t spi0_send_82_and_quad_word(uint8_t *_data)
 {
 	fpga_spi0_reset_nss();
@@ -416,7 +418,7 @@ uint32_t spi0_send_82_and_quad_word(uint8_t *_data)
 	return spi0_read_status();
 }
 
-// fpga bank select
+// fpga nvcm bank select
 uint32_t fpga_select_bank(uint8_t _data)
 {
 	fpga_spi0_reset_nss();
@@ -429,15 +431,15 @@ uint32_t fpga_select_bank(uint8_t _data)
 	return spi0_read_status();
 }
 
-// fpga nvcm enable 
+// fpga nvcm access enable
 void spi0_send_0_C4_via_82()
 {
 	uint8_t buffer[8] = { 0, 0, 0, 0, 0xC4, 0, 0, 0 };
 
-	spi0_send_82_and_quad_word(buffer);    // 0 0 0 0 c4 0 0 0
+	spi0_send_82_and_quad_word(buffer);
 }
 
-// fpga trim write
+// fpga nvcm write
 uint32_t spi0_write_11_bytes_via_02(uint8_t *_data)
 {
 	fpga_spi0_reset_nss();
@@ -452,21 +454,21 @@ uint32_t spi0_write_11_bytes_via_02(uint8_t *_data)
 	return spi0_read_status();
 }
 
-// fpga trim program
+// fpga nvcm trim program
 uint32_t spi0_send_11_bytes_0_15_f2_f1_c4(uint8_t _data)
 {
 	uint8_t buffer[11] = { 0, 0, _data, 0, 0x15, 0xF2, 0xF1, 0xC4, 0, 0, 0 };
 	return spi0_write_11_bytes_via_02(buffer);
 }
 
-// fpga trim secure
+// fpga nvcm trim secure
 uint32_t spi0_send_11_bytes_30_0_0_1_0(uint8_t _data)
 {
 	uint8_t buffer[11] = { 0, 0, _data, 0x30, 0, 0, 1, 0, 0, 0, 0 };
 	return spi0_write_11_bytes_via_02(buffer);
 }
 
-// fpga trim enable
+// fpga nvcm trim enable
 uint32_t spi0_send_8_bytes_via_82(void)
 {
 	uint8_t buffer[8] = { 0, 0x15, 0xF2, 0xF0, 0xC2, 0, 0, 0, };
@@ -518,10 +520,10 @@ uint32_t spi0_setup(uint32_t _prescale_select)
 
 	initialize_spi0(SPI_PSC_8);
 
-	// fpga "nvcm enable access" sequence
+	// fpga "nvcm unlock access" sequence
 	uint8_t buffer[8] = { 0x7E, 0xAA, 0x99, 0x7E, 0x01, 0x0E, 0, 0 };
 
-	// send "nvcm enable access" sequence to fpga
+	// send "nvcm unlock access" sequence to fpga
 	spi0_send_data(buffer, 6);
 
 	fpga_spi0_wait_and_set_nss();

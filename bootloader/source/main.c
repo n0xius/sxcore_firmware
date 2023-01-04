@@ -73,8 +73,8 @@ void handle_bootloader_spi_commands(void)
 
 				case MC_SWITCH_TO_FW:
 				{
-					uint32_t* flash_function_table = (uint32_t*)((uint8_t*)__firmware + 0x150);
-					uint32_t* did_initialize_functions = (uint32_t*)((uint8_t*)__firmware + 0x1FC);
+					uint32_t* flash_function_table = (uint32_t*)FW_FUNC_TBL;
+					uint32_t* did_initialize_functions = (uint32_t*)FW_IS_INITIALIZED;
 
 					if (*debug_mode != BOOTLOADER_DEBUG_MODE && *did_initialize_functions)
 						break;
@@ -107,10 +107,10 @@ int main(void)
 	gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_9);
 	FlagStatus usb_vbus = gpio_input_bit_get(GPIOA, GPIO_PIN_9);
 
-	uint32_t* g_did_initialize_functions = (uint32_t*)((uint32_t)&__firmware + 0x1FC);
+	uint32_t* did_initialize_functions = (uint32_t*)FW_IS_INITIALIZED;
 
 	// check if usb vbus is present
-	if ((*debug_mode == BOOTLOADER_DEBUG_MODE || !*g_did_initialize_functions) && usb_vbus == RESET)
+	if ((*debug_mode == BOOTLOADER_DEBUG_MODE || !*did_initialize_functions) && usb_vbus == RESET)
 		initialize_vector_table();
 
 	hardware_initialize();
