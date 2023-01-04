@@ -73,10 +73,10 @@ uint32_t config_write_to_flash(config_s *_config)
 {
 	_config->magic = CONFIG_MAGIC;
 
-	if ( flash_erase((uint32_t)__config) != GW_STATUS_FMC_SUCCESS )
+	if ( flash_erase((uint32_t)&__config) != GW_STATUS_FMC_SUCCESS )
 		return GW_STATUS_CONFIG_ERASE_ERROR; // 0xBAD00109
 
-	if ( flash_reprogram((uint8_t*)__config, (uint8_t*)_config, sizeof(config_s)) != GW_STATUS_FMC_SUCCESS )
+	if ( flash_reprogram((uint8_t*)&__config, (uint8_t*)_config, sizeof(config_s)) != GW_STATUS_FMC_SUCCESS )
 		return GW_STATUS_CONFIG_WRITE_ERROR; // 0xBAD0010A
 
 	return GW_STATUS_CONFIG_SUCCESS; // 0x900D0007

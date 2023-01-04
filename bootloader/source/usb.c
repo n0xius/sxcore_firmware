@@ -44,7 +44,7 @@ uint32_t ob_set_protection(uint16_t _spc)
 	fmc_unlock();
 	ob_unlock();
 
-	uint32_t status = ob_erase() || ob_security_protection_config((uint8_t)_spc) ? GW_STATUS_GENERIC_ERROR : GW_STATUS_FMC_SUCCESS;
+	uint32_t status = ob_erase() || ob_security_protection_config(_spc) ? GW_STATUS_GENERIC_ERROR : GW_STATUS_FMC_SUCCESS;
 
 	ob_lock();
 	fmc_lock();
@@ -194,18 +194,18 @@ uint32_t bootloader_handle_usb_command()
 		case USB_CMD_SET_LED_COLOR:                     // 0xFACE0008
 		{
 			uint32_t led_num = REG32(usb_recv_buffer + 4);
-			uint32_t led_clr = REG32(usb_recv_buffer + 8);
+			uint8_t led_clr = (uint8_t)REG32(usb_recv_buffer + 8);
 
 			switch(led_num)
 			{
 				case 1:
-					set_led_color_green((uint8_t)led_clr);
+					set_led_color_green(led_clr);
 					break;
 				case 2:
-					set_led_color_blue((uint8_t)led_clr);
+					set_led_color_blue(led_clr);
 					break;
 				case 3:
-					set_led_color_red((uint8_t)led_clr);
+					set_led_color_red(led_clr);
 					break;
 				default:
 					break;
@@ -246,10 +246,10 @@ uint32_t bootloader_handle_usb_command()
 			}
 
 			// NOTE: one time programming of the serial number
-			if ( REG32(serial_number + 0) != 0xFFFFFFFF
-				 || REG32(serial_number + 4) != 0xFFFFFFFF
-				 || REG32(serial_number + 8) != 0xFFFFFFFF
-				 || REG32(serial_number + 12) != 0xFFFFFFFF )
+			if ( REG32(serial_number + 0) != 0xFFFFFFFFu
+				 || REG32(serial_number + 4) != 0xFFFFFFFFu
+				 || REG32(serial_number + 8) != 0xFFFFFFFFu
+				 || REG32(serial_number + 12) != 0xFFFFFFFFu )
 			{
 				status = GW_STATUS_FW_UPDATE_ERROR; // 0xBAD00009
 				break;
@@ -307,7 +307,7 @@ uint32_t bootloader_handle_usb_command()
 				break;
 			}
 
-			uint16_t spc_value = (uint16_t)(REG32(usb_recv_buffer + 4) & 0xFFFF);
+			uint16_t spc_value = (uint16_t)REG32(usb_recv_buffer + 4);
 
 			status = ob_set_protection(spc_value);
 			break;
@@ -328,7 +328,7 @@ int32_t initialize_ram_func_table_and_run_firmware_cmd(bootloader_usb_s *_bootlo
 	uint32_t* did_initialize_functions = (uint32_t*)FW_IS_INITIALIZED;
 
 	if( (*debug_mode != BOOTLOADER_DEBUG_MODE && *did_initialize_functions) )
-		return ((int32_t)-1);
+		return -1l;
 
 	if (!g_ram_function_table)
 	{

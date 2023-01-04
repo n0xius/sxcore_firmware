@@ -48,7 +48,7 @@ int timeout_did_reach_timeout_ms(timeout_s* _timeout, uint32_t _ms)
 
 void set_start_addr_to_firmware()
 {
-	nvic_vector_table_set((uint32_t)__firmware, 0);
+	nvic_vector_table_set((uint32_t)&__firmware, 0);
 	hardware_initialize();
 }
 
@@ -65,6 +65,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 		case USB_CMD_PING:
 		{
 			status = GW_STATUS_SUCCESS;
+
 			REG32(_usb->send_buffer) = status;
 			break;
 		}
@@ -143,7 +144,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 
 			uint32_t block_index = REG32(_usb->recv_buffer + 4) & 15;
 
-			memcpy((uint8_t*)(g_block_buffer + block_index * 32), (_usb->recv_buffer + 8), 32);
+			memcpy(g_block_buffer + (block_index * 32), _usb->recv_buffer + 8, 32);
 
 			if ( block_index == 15 )
 				spi0_send_05_send_BC(1, g_block_buffer, 512);
@@ -165,7 +166,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			if ( block_index == 0 )
 				spi0_send_05_send_BC(1, g_block_buffer, 512);
 
-			memcpy((_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + block_index * 32), 32);
+			memcpy(_usb->send_buffer + 8, g_block_buffer + (block_index * 32), 32);
 			break;
 		}
 
@@ -182,7 +183,7 @@ void handle_usb_command(bootloader_usb_s* _usb, uint32_t _usb_cmd_size, uint8_t 
 			if ( block_index == 0 )
 				spi0_recv_data_BA(g_block_buffer, 512);
 
-			memcpy((_usb->send_buffer + 8), (uint8_t*)(g_block_buffer + (block_index * 32)), 32);
+			memcpy(_usb->send_buffer + 8, g_block_buffer + (block_index * 32), 32);
 			break;
 		}
 
@@ -578,13 +579,13 @@ uint8_t execute_spi_command(void)
 			uint8_t* serial_number = (uint8_t*)BLDR_SERIAL;
 			uint32_t* bootloader_version = (uint32_t*)BLDR_VERSION;
 
-			spi_buffer[0] = (uint8_t)((*bootloader_version) & 0xFF);
-			spi_buffer[1] = (uint8_t)((*bootloader_version >> 8) & 0xFF);
+			spi_buffer[0] = (uint8_t)(*bootloader_version);
+			spi_buffer[1] = (uint8_t)(*bootloader_version >> 8);
 
-			spi_buffer[2] = (uint8_t)((*firmware_version) & 0xFF);
-			spi_buffer[3] = (uint8_t)((*firmware_version >> 8) & 0xFF);
+			spi_buffer[2] = (uint8_t)(*firmware_version);
+			spi_buffer[3] = (uint8_t)(*firmware_version >> 8);
 
-			memcpy((uint8_t*)spi_buffer + 4, serial_number, 16);
+			memcpy(spi_buffer + 4, serial_number, 16);
 
 			spi_buffer[24] = spi0_recv_data_26(0x10C);
 
@@ -623,7 +624,7 @@ uint8_t execute_spi_command(void)
 
 		case MC_ERASE_CFG: // erase config page
 		{
-			uint32_t status = flash_erase((uint32_t)__config);
+			uint32_t status = flash_erase((uint32_t)&__config);
 
 			REG32(spi_buffer) = status;
 			should_send_response = 1;
@@ -648,7 +649,7 @@ uint8_t execute_spi_command(void)
 		{
 			uint8_t key_from_spi[16];
 
-			memcpy(key_from_spi, (uint8_t*)spi_buffer + 16, sizeof(key_from_spi));
+			memcpy(key_from_spi, spi_buffer + 16, sizeof(key_from_spi));
 
 			spi0_send_fpga_cmd(1);
 			spi0_send_05_send_BC(3, key_from_spi, 16);
@@ -661,7 +662,7 @@ uint8_t execute_spi_command(void)
 
 			aes128_cipher(g_aes_keys, key_from_spi);
 
-			memcpy((uint8_t*)spi_buffer + 16, key_from_spi, sizeof(key_from_spi));
+			memcpy(spi_buffer + 16, key_from_spi, sizeof(key_from_spi));
 
 			spi0_send_fpga_cmd(1);
 

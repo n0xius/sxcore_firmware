@@ -36,8 +36,6 @@ uint8_t crc7(uint8_t *_buffer, uint32_t _size)
 
 void mmc_spi_response_get(uint8_t *_response)
 {
-	//spi0_send_05_via_24(0);
-	//spi0_recv_data_BA(_response, 32);
 	spi0_send_05_recv_BA(0, _response, 32);
 }
 
@@ -57,10 +55,10 @@ uint32_t mmc_send_command(uint8_t cmd, uint32_t argument, uint8_t *response, uin
 	uint8_t cmd_buffer[7];
 
 	cmd_buffer[0] = cmd | 0x40;
-	cmd_buffer[1] = argument >> 24;
-	cmd_buffer[2] = argument >> 16;
-	cmd_buffer[3] = argument >> 8;
-	cmd_buffer[4] = argument;
+	cmd_buffer[1] = (uint8_t)(argument >> 24);
+	cmd_buffer[2] = (uint8_t)(argument >> 16);
+	cmd_buffer[3] = (uint8_t)(argument >> 8);
+	cmd_buffer[4] = (uint8_t)(argument);
 	cmd_buffer[5] = (crc7(cmd_buffer, 5) << 1) | 1;
 	cmd_buffer[6] = 1;
 
@@ -82,19 +80,13 @@ uint32_t mmc_send_command(uint8_t cmd, uint32_t argument, uint8_t *response, uin
 		case MMC_WRITE_BLOCK:
 		{
 			if ( _data )
-			{
-				//spi0_send_05_via_24(1);
-				//spi0_send_data_BC(_data, 512);
 				spi0_send_05_send_BC(1, _data, 512);
-			}
 
 			cmd_buffer[6] = 5;
 			break;
 		}
 	}
 
-	//spi0_send_05_via_24(0);
-	//spi0_send_data_BC(cmd_buffer, 7);
 	spi0_send_05_send_BC(0, cmd_buffer, 7);
 	spi0_send_54();
 
@@ -174,7 +166,7 @@ uint32_t mmc_initialize(uint8_t *_cid)
 
 		if ( _cid )
 		{
-			memcpy(_cid, (uint8_t*)emmc_response + 1, 16);
+			memcpy(_cid, emmc_response + 1, 16);
 			_cid[15] = crc7(_cid, 15) | 1;
 		}
 
@@ -330,7 +322,7 @@ uint32_t write_bct_and_payload(uint8_t *_cid, uint8_t _device_type)
 	uint8_t read_buffer[512];
 
 	const uint8_t *bct_data = _device_type == DEVICE_TYPE_ERISTA ? erista_bct : mariko_bct;
-	uint32_t bct_size = _device_type == DEVICE_TYPE_ERISTA ? sizeof(erista_bct) : sizeof(mariko_bct);
+	const uint32_t bct_size = _device_type == DEVICE_TYPE_ERISTA ? sizeof(erista_bct) : sizeof(mariko_bct);
 
 	uint32_t status = GW_STATUS_BCT_PAYLOAD_WRITE_ERROR; 		// 0xBAD0010C
 

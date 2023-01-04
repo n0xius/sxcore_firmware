@@ -13,10 +13,10 @@ extern uint8_t* __spi_buffer__;
 
 void initialize_vector_table()
 {
-	nvic_vector_table_set((uint32_t)__firmware, 0);
+	nvic_vector_table_set((uint32_t)&__firmware, 0);
 
 	// call reset_handler inside firmware
-	((void_function_t)__firmware[1])();
+	((void_function_t)((uint32_t)&__firmware) + 4)();
 }
 
 void handle_bootloader_spi_commands(void)
@@ -36,11 +36,13 @@ void handle_bootloader_spi_commands(void)
 
 			uint32_t status_code = 0;
 
-			switch ( __spi_buffer__[0] )
+			uint8_t spi_cmd =  __spi_buffer__[0];
+
+			switch ( spi_cmd )
 			{
 				case MC_FW_UPDATE_INIT:
 				{
-					status_code = validate_firmware_header((uint8_t*)__spi_buffer__ + 16, __spi_buffer__[1]);
+					status_code = validate_firmware_header(__spi_buffer__ + 16, __spi_buffer__[1]);
 					break;
 				}
 
@@ -48,7 +50,7 @@ void handle_bootloader_spi_commands(void)
 				{
 					for(uint32_t i = 0; i != 0x1D0; i += 64)
 					{
-						status_code = handle_firmware_update(((uint8_t*)__spi_buffer__ + 16) + i);
+						status_code = handle_firmware_update((__spi_buffer__ + 16) + i);
 
 						if (status_code != GW_STATUS_RECEIVED_UPDATE_BLOCK)
 							break;
@@ -94,7 +96,7 @@ void handle_bootloader_spi_commands(void)
 			spi0_send_fpga_cmd(3);
 
 			// NOTE: not a firmware update command, go back into the first while loop
-			if (__spi_buffer__[0] != MC_FW_UPDATE_INIT && __spi_buffer__[0] != MC_FW_UPDATE_TRANSFER)
+			if (spi_cmd != MC_FW_UPDATE_INIT && spi_cmd != MC_FW_UPDATE_TRANSFER)
 				break;
 		}
 	}

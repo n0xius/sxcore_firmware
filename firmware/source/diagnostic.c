@@ -39,7 +39,7 @@ void diagnosis_printf(const char* _text, ...)
 	va_list list;
 	va_start(list, _text);
 
-	int length = _vsnprintf((char*)g_usb->send_buffer, (uint32_t)64, _text, list);
+	int length = _vsnprintf((char*)g_usb->send_buffer, 64ul, _text, list);
 
 	if (length)
 		g_usb->send_func(length);
@@ -190,10 +190,10 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
 					{
 						diagnosis_printf("Samsung");
 
-						if ( !memcmp((uint8_t *)cid_data + 3, (uint8_t *)"BJTD4R", (uint32_t)6) )
+						if ( !memcmp(cid_data + 3, (uint8_t *)"BJTD4R", 6) )
 							diagnosis_printf(" KLMBG2JETD-B041 32GB");
 
-						if ( !memcmp((uint8_t *)cid_data + 3, (uint8_t *)"BJNB4R", (uint32_t)6) )
+						if ( !memcmp(cid_data + 3, (uint8_t *)"BJNB4R", 6) )
 							diagnosis_printf(" KLMBG2JENB-B041 32GB");
 
 						break;
@@ -203,7 +203,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
 					{
 						diagnosis_printf("Toshiba");
 
-						if ( !memcmp((uint8_t *)cid_data + 3, (uint8_t *)"032G32", (uint32_t)6) )
+						if ( !memcmp(cid_data + 3, (uint8_t *)"032G32", 6) )
 							diagnosis_printf(" THGBMHG8C2LBAIL 32GB");
 
 						break;
@@ -213,7 +213,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
 					{
 						diagnosis_printf("Hynix");
 
-						if ( !memcmp((uint8_t *)cid_data + 3, (uint8_t *)"hB8aP>", (uint32_t)6) )
+						if ( !memcmp(cid_data + 3, (uint8_t *)"hB8aP>", 6) )
 							diagnosis_printf(" H26M62002JPR 32GB");
 
 						break;
@@ -236,7 +236,7 @@ void handle_usb_diagnostic(bootloader_usb_s* _usb)
 			diagnosis_printf("> r\n");
 			diagnosis_printf("# Resetting to factory settings...\n");
 
-			uint32_t status = flash_erase((uint32_t)__config);
+			uint32_t status = flash_erase((uint32_t)&__config);
 
 			diagnosis_printf("# Status: %08X\n", status);
 			break;
@@ -418,14 +418,14 @@ void diagnosis_hexdump_mmc_cid(const diagnostic_print_s *_diag_print, uint32_t _
 	data[2] = (uint8_t)(_result >> 16);
 	data[3] = (uint8_t)(_result >> 24);
 
-	memcpy((uint8_t*)data + 4, _cid, 16);
+	memcpy(data + 4, _cid, 16);
 
 	diagnosis_hexdump(_diag_print, DATA_TYPE_MMC_CID, data, sizeof(data));
 }
 
 void diagnosis_hexdump_device_type(const diagnostic_print_s *_diag_print, uint8_t _device_type)
 {
-	diagnosis_hexdump(_diag_print, DATA_TYPE_DEVICE, (uint8_t *)&_device_type, sizeof(uint8_t));
+	diagnosis_hexdump(_diag_print, DATA_TYPE_DEVICE, &_device_type, sizeof(uint8_t));
 }
 
 void diagnosis_hexdump_fw_version(const diagnostic_print_s *_diag_print, uint32_t _version)

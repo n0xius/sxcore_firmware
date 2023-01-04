@@ -22,7 +22,7 @@ uint32_t flash_reprogram(uint8_t *_Dst, uint8_t *_Src, uint32_t _Size)
 		if ( i >= _Size )
 			break;
 
-		if ( fmc_word_reprogram((uint32_t)(uint8_t*)_Dst + i, *(uint32_t*)((uint8_t*)_Src + i)) )
+		if ( fmc_word_reprogram((uint32_t)(_Dst + i), *(uint32_t*)(_Src + i)) )
 			break;
 	}
 

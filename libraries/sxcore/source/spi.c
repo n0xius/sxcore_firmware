@@ -4,9 +4,6 @@
 #include "delay.h"
 #include "rgb_led.h"
 
-extern uint32_t __bootloader;
-extern uint32_t __firmware;
-
 extern int memcmp ( const void* _Ptr1, const void* _Ptr2, uint32_t _Size );
 extern void* memcpy ( void* _Dst, const void* _Src, uint32_t _Size );
 extern void* memset ( void* _Dst, int _Val, uint32_t _Size );
@@ -109,12 +106,12 @@ void spi0_transmit_data(uint8_t *_data, uint32_t _data_len)
 {
 	for(uint32_t i = 0; i < _data_len; ++i)
 	{
-		spi_i2s_data_transmit(SPI0, (uint32_t)_data[i]);
+		spi_i2s_data_transmit(SPI0, _data[i]);
 
 		// wait until TBE/RBNE is set
 		while ( (SPI_STAT(SPI0) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
-		_data[i] = (uint8_t)(spi_i2s_data_receive(SPI0) & 0xFF);
+		_data[i] = (uint8_t)spi_i2s_data_receive(SPI0);
 	}
 
 	// wait until spi transaction is done.
@@ -125,7 +122,7 @@ void spi0_send_data(uint8_t *_data, uint32_t _data_len)
 {
 	for(uint32_t i = 0; i < _data_len; ++i)
 	{
-		spi_i2s_data_transmit(SPI0, (uint32_t)_data[i]);
+		spi_i2s_data_transmit(SPI0, _data[i]);
 
 		// wait until TBE/RBNE is set
 		while ( (SPI_STAT(SPI0) & (SPI_STAT_TBE | SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
@@ -139,19 +136,19 @@ void spi1_recv_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 {
 	spi1_set_cs_low();
 
-	spi_i2s_data_transmit(SPI1, (uint32_t)_cmd);
+	spi_i2s_data_transmit(SPI1, _cmd);
 
 	// wait until TBE/RBNE is set
 	while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE | SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
 	for(uint32_t i = 0; i < _data_len; ++i)
 	{
-		spi_i2s_data_transmit(SPI1, (uint32_t)0xFF);
+		spi_i2s_data_transmit(SPI1, 0xFF);
 
 		// wait until TBE/RBNE is set
 		while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE | SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
-		_data[i] = (uint8_t)(spi_i2s_data_receive(SPI1) & 0xFF);
+		_data[i] = (uint8_t)spi_i2s_data_receive(SPI1);
 	}
 
 	// wait until spi transaction is done.
@@ -164,14 +161,14 @@ void spi1_send_data(uint8_t _cmd, uint8_t *_data, uint32_t _data_len)
 {
 	spi1_set_cs_low();
 
-	spi_i2s_data_transmit(SPI1, (uint32_t)_cmd);
+	spi_i2s_data_transmit(SPI1, _cmd);
 
 	// wait until TBE/RBNE is set
 	while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
 
 	for(uint32_t i = 0; i < _data_len; ++i)
 	{
-		spi_i2s_data_transmit(SPI1, (uint32_t)_data[i]);
+		spi_i2s_data_transmit(SPI1, _data[i]);
 
 		// wait until TBE/RBNE is set
 		while ( (SPI_STAT(SPI1) & (SPI_STAT_TBE|SPI_STAT_RBNE)) != (SPI_STAT_RBNE | SPI_STAT_TBE) );
@@ -189,7 +186,7 @@ uint8_t spi0_transfer_one_byte(uint8_t _data)
 
 	spi0_transmit_data(&buffer, 1);
 
-	return (uint8_t)(buffer & 0xFF);
+	return buffer;
 }
 
 void spi0_send_one_byte(uint8_t _data)
@@ -241,12 +238,10 @@ uint32_t spi0_read_status()
 	return 0xBAD0000B;
 }
 
-//void spi0_send_data_24(uint8_t _cmd, uint8_t _data_len, uint32_t _data)
 void spi0_send_data_24(uint32_t _cmd_and_size, uint32_t _data)
 {
 	uint8_t buffer[16];
 
-	//int cmd_len = ((uint8_t*)(&_cmd_and_size))[1];
 	int cmd_len = (uint8_t)(_cmd_and_size >> 8);
 
 	if (cmd_len >= 4)
@@ -267,12 +262,10 @@ void spi0_send_data_24(uint32_t _cmd_and_size, uint32_t _data)
 	fpga_spi0_wait_and_set_nss();
 }
 
-//uint32_t spi0_recv_data_26(uint8_t _cmd, uint8_t _data_len)
 uint32_t spi0_recv_data_26(uint32_t _cmd_and_size)
 {
 	uint8_t buffer[16];
 
-	//int cmd_len = ((uint8_t*)(&_cmd_and_size))[1];
 	int cmd_len = (uint8_t)(_cmd_and_size >> 8);
 
 	if (cmd_len >= 4)
@@ -288,11 +281,7 @@ uint32_t spi0_recv_data_26(uint32_t _cmd_and_size)
 	uint32_t data = 0;
 
 	for (int i = 0; i != cmd_len; ++i)
-	{
-		//data <<= 8;
-		//data |= buffer[i + 2];
 		data = (data << 8) | buffer[i + 2];
-	}
 
 	return data;
 }

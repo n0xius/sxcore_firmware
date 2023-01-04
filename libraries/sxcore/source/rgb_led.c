@@ -21,9 +21,9 @@ void set_led_color_blue(uint8_t _blue)
 
 void set_led_color(uint32_t _color)
 {
-	set_led_color_red((_color >> 16) & 0xFF);
-	set_led_color_green((_color >> 8) & 0xFF);
-	set_led_color_blue(_color & 0xFF);
+	set_led_color_red((uint8_t)(_color >> 16));
+	set_led_color_green((uint8_t)(_color >> 8));
+	set_led_color_blue((uint8_t)(_color));
 }
 
 void toggle_blue_led_glow(uint8_t _should_glow)

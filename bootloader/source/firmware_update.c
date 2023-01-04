@@ -55,7 +55,7 @@ uint32_t validate_firmware_header(uint8_t* _firmware_buffer, uint32_t _should_er
 		firmware_update_buffer_position = 0;
 		return GW_STATUS_FW_UPDATE_ERROR; //0xBAD00009
 	}
-	else if(!firmware_should_erase || flash_erase((uint32_t)__firmware) == GW_STATUS_FMC_SUCCESS) {
+	else if(!firmware_should_erase || flash_erase((uint32_t)&__firmware) == GW_STATUS_FMC_SUCCESS) {
 		return GW_STATUS_FMC_SUCCESS; //0x900D0002
 	}
 
@@ -72,7 +72,7 @@ uint32_t handle_firmware_update(uint8_t* _firmware_buffer)
 
 	if (!(firmware_update_buffer_position & 0x3FF)
 		&& firmware_should_erase
-		&& flash_erase((uint32_t)__firmware + firmware_update_buffer_position) != GW_STATUS_FMC_SUCCESS)
+		&& flash_erase((uint32_t)&__firmware + firmware_update_buffer_position) != GW_STATUS_FMC_SUCCESS)
 		return GW_STATUS_GENERIC_ERROR; //0xBAD00000
 
 	firmware_update_block_s update_block;
@@ -91,13 +91,13 @@ uint32_t handle_firmware_update(uint8_t* _firmware_buffer)
 	uint8_t should_initialize = 0;
 	if (firmware_update_buffer_position == 0x1C0)
 	{
-		REG32(((uint8_t*)&update_block.data) + 0x3C) = (uint32_t)0xFFFFFFFF;
+		REG32(update_block.data + 0x3C) = 0xFFFFFFFFu;
 		should_initialize = 1;
 	}
 
 	if ( firmware_should_erase
-		 && flash_reprogram((uint8_t *)((uint32_t)__firmware + firmware_update_buffer_position),
-							(uint8_t *)update_block.data,
+		 && flash_reprogram((uint8_t *)((uint32_t)&__firmware + firmware_update_buffer_position),
+							update_block.data,
 							sizeof(firmware_update_block_s)) != GW_STATUS_FMC_SUCCESS)
 	{
 		return GW_STATUS_GENERIC_ERROR; //0xBAD00000
@@ -115,10 +115,10 @@ uint32_t handle_firmware_update(uint8_t* _firmware_buffer)
 	if (!should_initialize)
 		return GW_STATUS_SUCCESS; //0x900D0000
 
-	uint32_t* firmware_version = (uint32_t*)FW_VERSION;
+	uint8_t* firmware_version = (uint8_t*)FW_VERSION;
 
 	if ( firmware_should_erase
-		 && flash_reprogram((uint8_t *)firmware_version, (uint8_t *)&firmware_update_version, sizeof(uint32_t)) != GW_STATUS_FMC_SUCCESS )
+		 && flash_reprogram(firmware_version, (uint8_t *)&firmware_update_version, sizeof(uint32_t)) != GW_STATUS_FMC_SUCCESS )
 	{
 		return GW_STATUS_GENERIC_ERROR; //0xBAD00000
 	}
